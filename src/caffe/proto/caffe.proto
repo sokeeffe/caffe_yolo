@@ -420,7 +420,10 @@ message LayerParameter {
   optional ThresholdParameter threshold_param = 128;
   optional TileParameter tile_param = 138;
   optional WindowDataParameter window_data_param = 129;
+
+  // My parameters
   optional ShuffleChannelParameter shuffle_channel_param = 164;
+  optional RegionParameter region_param = 165;
 }
 
 // Message that stores parameters used to apply transformation
@@ -1438,4 +1441,18 @@ message PReLUParameter {
 
 message ShuffleChannelParameter {
   optional uint32 group = 1[default = 1]; // The number of group
+}
+
+message RegionParameter{
+  optional uint32 side = 1 [default = 13];
+  optional uint32 num_classes = 2 [default = 20];
+  optional uint32 coords = 3 [default = 4];
+  optional uint32 num = 4 [default = 5];
+  optional float jitter = 5 [default = 0.2];
+  optional float object_scale = 6 [default = 1.0];
+  optional float class_scale = 7 [default = 1.0];
+  optional float noobject_scale = 8 [default = 0.5];
+  optional float coord_scale = 9 [default = 5.0];
+  optional float thresh = 10 [default = 0.2];
+  repeated float biases = 11;
 }
