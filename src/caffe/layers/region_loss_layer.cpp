@@ -53,8 +53,11 @@ template <typename Dtype>
 void RegionLossLayer<Dtype>::Forward_cpu(
       const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
   const Dtype* bottom_data = bottom[0]->cpu_data();
+  const Dtype* label_data = bottom[1]->cpu_data();
   Dtype* top_data = top[0]->mutable_cpu_data();
   caffe_copy(bottom[0]->count(), bottom_data, top_data);
+  LOG(INFO) << label_data[0] << "," << label_data[1] << "," << label_data[2] << ","
+        << label_data[3] << "," << label_data[4];
   for (int b = 0; b < bottom[0]->num(); b++) {
     for (int n = 0; n < num_; n++) {
       int index = entry_index(side_, num_classes_, num_, coords_, b, n*side_*side_, 0);
