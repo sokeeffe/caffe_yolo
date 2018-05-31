@@ -134,6 +134,10 @@ cv::Mat ReadImageToCVMat(const string& filename,
     const int height, const int width, const bool is_color);
 
 cv::Mat ReadImageToCVMat(const string& filename,
+    const int height, const int width,
+    const bool is_color, const bool letterbox);
+
+cv::Mat ReadImageToCVMat(const string& filename,
     const int height, const int width);
 
 cv::Mat ReadImageToCVMat(const string& filename,
@@ -145,6 +149,11 @@ cv::Mat DecodeDatumToCVMatNative(const Datum& datum);
 cv::Mat DecodeDatumToCVMat(const Datum& datum, bool is_color);
 
 void CVMatToDatum(const cv::Mat& cv_img, Datum* datum);
+
+bool ReadBoxDataToDatum(const string& filename, const vector<int>& labels,
+    const vector<float>& x_centers, const vector<float>& y_centers, const vector<float>& widths,
+    const vector<float>& heights, const int height, const int width,
+    const bool is_color, const std::string & encoding, Datum* datum);
 #endif  // USE_OPENCV
 
 }  // namespace caffe

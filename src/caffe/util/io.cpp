@@ -89,6 +89,40 @@ cv::Mat ReadImageToCVMat(const string& filename,
 }
 
 cv::Mat ReadImageToCVMat(const string& filename,
+    const int height, const int width,
+    const bool is_color, const bool letterbox) {
+  cv::Mat cv_img;
+  int cv_read_flag = (is_color ? CV_LOAD_IMAGE_COLOR :
+    CV_LOAD_IMAGE_GRAYSCALE);
+  cv::Mat cv_img_origin = cv::imread(filename, cv_read_flag);
+  if (!cv_img_origin.data) {
+    LOG(ERROR) << "Could not open or find file " << filename;
+    return cv_img_origin;
+  }
+  if (height > 0 && width > 0 && !letterbox) {
+    cv::resize(cv_img_origin, cv_img, cv::Size(width, height));
+  } else if (height > 0 && width > 0 && letterbox) {
+    int new_w = cv_img_origin.cols;
+    int new_h = cv_img_origin.rows;
+    if (((float)width/cv_img_origin.cols) < ((float)height/cv_img_origin.rows)) {
+        new_w = width;
+        new_h = (cv_img_origin.rows * width)/cv_img_origin.cols;
+    } else {
+        new_h = height;
+        new_w = (cv_img_origin.cols * height)/cv_img_origin.rows;
+    }
+    cv::Mat cv_img_resized;
+    cv::resize(cv_img_origin, cv_img_resized, cv::Size(new_w, new_h));
+    cv::Mat cv_img_back(cv::Size(width, height), cv_img_resized.type(), cv::Scalar(0.5));
+    cv_img_resized.copyTo(cv_img_back(cv::Rect((width-new_w)/2,(height-new_h)/2,cv_img_resized.cols, cv_img_resized.rows)));
+    cv_img = cv_img_back;
+  } else {
+    cv_img = cv_img_origin;
+  }
+  return cv_img;
+}
+
+cv::Mat ReadImageToCVMat(const string& filename,
     const int height, const int width) {
   return ReadImageToCVMat(filename, height, width, true);
 }
@@ -233,6 +267,46 @@ void CVMatToDatum(const cv::Mat& cv_img, Datum* datum) {
     }
   }
   datum->set_data(buffer);
+}
+
+bool ReadBoxDataToDatum(const string& filename, const vector<int>& labels,
+    const vector<float>& x_centers, const vector<float>& y_centers, const vector<float>& widths,
+    const vector<float>& heights, const int height, const int width,
+    const bool is_color, const std::string & encoding, Datum* datum) {
+  cv::Mat cv_img = ReadImageToCVMat(filename, height, width, is_color, true);
+  // std::cout << "Rows: " << cv_img.rows << "\n";
+  if (cv_img.data) {
+    if (encoding.size()) {
+      if ( (cv_img.channels() == 3) == is_color && !height && !width &&
+          matchExt(filename, encoding) ){
+        std::cout << "CALLING HERE\n";
+        return true;//ReadFileToDatum(filename, annoname, label_map, ori_w, ori_h, datum);
+      }
+      // std::cout << "Rows: " << cv_img.rows << "\n";
+      std::vector<uchar> buf;
+      cv::imencode("."+encoding, cv_img, buf);
+      datum->set_data(std::string(reinterpret_cast<char*>(&buf[0]),
+                      buf.size()));
+      datum->set_encoded(true);
+      for (int i = 0; i < 30; ++i) {
+        datum->add_float_data(float(labels[i]));
+        datum->add_float_data(x_centers[i]);
+        datum->add_float_data(y_centers[i]);
+        datum->add_float_data(widths[i]);
+        datum->add_float_data(heights[i]);
+      }
+      // read xml anno data
+  //     ParseXmlToDatum(annoname, label_map, ori_w, ori_h, datum);
+      return true;
+    }
+    // std::cout << "CALLING EVERYWHERE\n";
+  //   CVMatToDatum(cv_img, datum);
+  //   // read xml anno data
+  //   ParseXmlToDatum(annoname, label_map, ori_w, ori_h, datum);
+    return true;
+  } else {
+    return false;
+  }
 }
 #endif  // USE_OPENCV
 }  // namespace caffe
