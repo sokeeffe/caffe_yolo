@@ -18,6 +18,9 @@ if len(sys.argv) != 4:
 	print "Usage: python test_xtiny_yolo_spl.py net.prototxt net.caffemodel testImage.png"
 	exit()
 
+#************************************************************************************************8
+
+# caffe.set_mode_gpu()
 caffe.set_mode_cpu()
 
 model_def = sys.argv[1]
@@ -50,6 +53,8 @@ net.blobs['data'].reshape(1,        # batch size
                           3,         # 3-channel (BGR) images
                           288, 288)  # image size is 227x227
 
+#************************************************************************************************
+
 class Box:
 	def __init__(self, x, y, width, height):
 		self.x = x
@@ -57,36 +62,120 @@ class Box:
 		self.width = width
 		self.height = height
 
+#*******************************************************************************8
+### USED for embedding image with cv2 images
+# def embed_image(source, dest, dx, dy):
+# 	out = dest
+# 	for x in range(source.shape[-1]):
+# 		for y in range(source.shape[0]):
+# 			for k in range(source.shape[1]):
+# 				val = source[y][k][x]
+# 				out[dy+y][dx+k][x] = val
+# 	return out
+#
+# def letterbox_image(image, w, h):
+# 	new_w = w
+# 	new_h = h
+# 	if((float(w)/image.shape[1]) < (float(h)/image.shape[0])):
+# 		new_w = w
+# 		new_h = (image.shape[0]*w)/image.shape[1]
+# 	else:
+# 		new_h = h
+# 		new_w = (image.shape[1]*h)/image.shape[0]
+# 	# print new_w
+# 	# print new_h
+# 	# image_resized = darknet_resize_image(image,new_h, new_w)
+# 	image_resized = cv2.resize(image, (new_w, new_h));
+# 	# image_resized = caffe.io.resize_image(image, [new_h, new_w])
+# 	# print image_resized.shape
+# 	# print image_resized[0:5,0,0]
+# 	ret = np.empty((288, 288, 3),
+#                            dtype=np.float32)
+# 	ret.fill(0.5)
+# 	out = embed_image(image_resized, ret, (w-new_w)/2, (h-new_h)/2)
+# 	# plt.imshow(out)
+# 	# plt.show()
+# 	return out
+#*************************************************************************************
+
+def darknet_resize_image(image, w, h):
+	resized = np.empty((image.shape[0],h,w), dtype=np.float32)
+	part = np.empty((image.shape[0], image.shape[1], w), dtype=np.float32)
+	print "image Width: " + str(image.shape[2]) + " new W: " + str(w)
+	w_scale = float(image.shape[2]-1)/(w-1)
+	h_scale = float(image.shape[1]-1)/(h-1)
+	print "W scale: " + str(w_scale) + " H scale: " + str(h_scale);
+	for k in range (image.shape[0]):
+		for r in range (image.shape[1]):
+			for c in range(w):
+				val = 0.0
+				if c==w-1 or image.shape[2]==1:
+					val = image[k,r,image.shape[2]-1]
+				else:
+					sx = c*w_scale
+					ix = int(sx)
+					dx = sx-ix
+					val = ((1-dx)*image[k,r,ix]) + (dx*image[k,r,ix+1])
+				part[k,r,c] = val
+	for k in range(image.shape[0]):
+		for r in range(h):
+			sy = r*h_scale;
+			iy = int(sy)
+			dy = sy-iy
+			for c in range(w):
+				val = (1-dy)*part[k,iy,c]
+				resized[k,r,c] = val
+			if r==h-1 or image.shape[1]==1:
+				continue
+			for c in range(w):
+				val = dy*part[k,iy+1,c]
+				resized[k,r,c] += val
+	return resized
+
 def embed_image(source, dest, dx, dy):
 	out = dest
-	for x in range(source.shape[-1]):
-		for y in range(source.shape[0]):
-			for k in range(source.shape[1]):
-				val = source[y][k][x]
-				out[dy+y][dx+k][x] = val
+	for x in range(source.shape[0]):
+		for y in range(source.shape[1]):
+			for k in range(source.shape[2]):
+				val = source[x][y][k]
+				out[x][dy+y][dx+k] = val
 	return out
 
 def letterbox_image(image, w, h):
 	new_w = w
 	new_h = h
-	if((float(w)/image.shape[1]) < (float(h)/image.shape[0])):
+	if((float(w)/image.shape[2]) < (float(h)/image.shape[1])):
 		new_w = w
-		new_h = (image.shape[0]*w)/image.shape[1]
+		new_h = (image.shape[1]*w)/image.shape[2]
 	else:
 		new_h = h
-		new_w = (image.shape[1]*h)/image.shape[0]
+		new_w = (image.shape[2]*h)/image.shape[1]
 	print new_w
 	print new_h
-	image_resized = caffe.io.resize_image(image, [new_h, new_w])
+	image_resized = darknet_resize_image(image, new_w, new_h)
+	# image_resized = cv2.resize(image, (new_w, new_h));
+	# image_resized = caffe.io.resize_image(image, [new_h, new_w])
 	print image_resized.shape
-	print image_resized[0:5,0,0]
-	ret = np.empty((288, 288, 3),
+	# print image_resized[0:5,0,0]
+	ret = np.empty((3, 288, 288),
                            dtype=np.float32)
 	ret.fill(0.5)
 	out = embed_image(image_resized, ret, (w-new_w)/2, (h-new_h)/2)
 	# plt.imshow(out)
 	# plt.show()
 	return out
+
+def cv2_to_numpy(image):
+	height = image.shape[0];
+	width = image.shape[1];
+	channels = image.shape[2];
+	image = image[...,::-1] # BGR to RGB
+	ret = np.empty((channels, height, width), dtype=np.float32)
+	for h in range(height):
+		for c in range(channels):
+			for w in range(width):
+				ret[c,h,w] = image[h,w,c]/255.0
+	return ret
 
 def correct_region_box(box, n, w, h, net_w, net_h, relative):
 	new_w = 0
@@ -157,14 +246,14 @@ def apply_nms(boxes, thres):
 def det(image, image_id, pic):
 
 	# Transform the letterbox image into Caffe format. Do not perform if working off CSV file
-	transpose = transformer.transpose.get('data')
-	channel_swap = transformer.channel_swap.get('data')
-	temp = image.transpose(transpose)
-	temp = temp[channel_swap, :, :]
+	# transpose = transformer.transpose.get('data')
+	# channel_swap = transformer.channel_swap.get('data')
+	# temp = image.transpose(transpose)
+	# temp = temp[channel_swap, :, :]
 
 	# Use temp for image processing
-	net.blobs['data'].data[...] = temp
-	# net.blobs['data'].data[...] = image
+	# net.blobs['data'].data[...] = temp
+	net.blobs['data'].data[...] = image
 
 	print "Forward Started"
 	output = net.forward()
@@ -174,7 +263,7 @@ def det(image, image_id, pic):
 
 	input_image = net.blobs['data'].data
 	print input_image.shape
-	output_dim = net.blobs['conv9'].data
+	output_dim = net.blobs['region1'].data
 	print output_dim.shape
 
 	output_height = output_dim.shape[2]
@@ -190,35 +279,37 @@ def det(image, image_id, pic):
 	probs=np.zeros(shape=((num_boxes*output_width*output_height), objectness+classes))
 
 	# Doing Sigmoid Activations and softmaxes here as I missed them in implementation
-	for i in range(output_width*output_height):
-		row = i/output_width
-		col = i%output_height
-		# print "row: " + str(row) + " col: " + str(col)
-		for n in range(num_boxes):
-			obj_index = n*(coords+objectness+classes) + coords
-			output_dim[0, obj_index, row, col] = sigmoid(output_dim[0, obj_index, row, col])
-			box_index = n*(coords+objectness+classes)
-			output_dim[0, box_index, row, col] = sigmoid(output_dim[0, box_index, row, col])
-			output_dim[0, box_index+1, row, col] = sigmoid(output_dim[0, box_index+1, row, col])
-			class_index = n*(coords+objectness+classes) + coords + 1
-			softmax_class = softmax([output_dim[0, class_index, row, col],
-				output_dim[0, class_index+1, row, col],
-				output_dim[0, class_index+2, row, col],
-				output_dim[0, class_index+3, row, col]])
-			output_dim[0, class_index, row, col] = softmax_class[0]
-			output_dim[0, class_index+1, row, col] = softmax_class[1]
-			output_dim[0, class_index+2, row, col] = softmax_class[2]
-			output_dim[0, class_index+3, row, col] = softmax_class[3]
+	# for i in range(output_width*output_height):
+	# 	row = i/output_width
+	# 	col = i%output_height
+	# 	# print "row: " + str(row) + " col: " + str(col)
+	# 	for n in range(num_boxes):
+	# 		obj_index = n*(coords+objectness+classes) + coords
+	# 		output_dim[0, obj_index, row, col] = sigmoid(output_dim[0, obj_index, row, col])
+	# 		box_index = n*(coords+objectness+classes)
+	# 		output_dim[0, box_index, row, col] = sigmoid(output_dim[0, box_index, row, col])
+	# 		output_dim[0, box_index+1, row, col] = sigmoid(output_dim[0, box_index+1, row, col])
+	# 		class_index = n*(coords+objectness+classes) + coords + 1
+	# 		softmax_class = softmax([output_dim[0, class_index, row, col],
+	# 			output_dim[0, class_index+1, row, col],
+	# 			output_dim[0, class_index+2, row, col],
+	# 			output_dim[0, class_index+3, row, col]])
+	# 		output_dim[0, class_index, row, col] = softmax_class[0]
+	# 		output_dim[0, class_index+1, row, col] = softmax_class[1]
+	# 		output_dim[0, class_index+2, row, col] = softmax_class[2]
+	# 		output_dim[0, class_index+3, row, col] = softmax_class[3]
 
+	# print "\t\tOUTPUT TEST: " + str(output_dim[0,5,0,0])
 
-	# f = open('/home/simon/DeepLearning/caffe-yolov2/region_out_temp.csv', 'w')
-	# for x in range(output_dim.shape[1]):
-	# 	for y in range(output_dim.shape[2]):
-	# 		for k in range(output_dim.shape[3]):
-	# 			f.write(str(output_dim[0][x][y][k]))
-	# 			f.write(',')
-	# 		f.write('\n')
-	# f.close()
+	f = open('/home/simon/DeepLearning/caffe/region_out.csv', 'w')
+	for x in range(output_dim.shape[1]):
+		for y in range(output_dim.shape[2]):
+			for k in range(output_dim.shape[3]):
+				f.write(str(output_dim[0][x][y][k]))
+				if k < output_dim.shape[3]-1:
+					f.write(',')
+			f.write('\n')
+	f.close()
 
 	# res = output['conv9'][0]  # the output probability vector for the first image in the batch
 	# sixth_pool = net.blobs['pool6'].data
@@ -268,7 +359,7 @@ def det(image, image_id, pic):
 	im = cv2.imread(pic)
 	color = (255, 242, 35)
 	for index, box in enumerate(boxes):
-		if probs[index, 4] > 0.5:
+		if probs[index, 4] > 0.2:
 			cv2.rectangle(im,(int(box.x - (box.width/2)), int(box.y - (box.height/2))),(int(box.x + (box.width/2)),int(box.y + (box.height/2))),color,3)
 	
 	cv2.imshow('src', im)
@@ -292,10 +383,36 @@ for idx, line in enumerate(lines):
 		image_csv[channel_index][row_index][indx] = val
 
 # Load an image with caffe IO and letterbox it into the correct image size
-image = caffe.io.load_image(pic)
-image_letterbox = letterbox_image(image, 288, 288)
+# image = caffe.io.load_image(pic)
+# print "IMAGE"
+# print image[0,0,0]
+# image_letterbox = letterbox_image(image, 288, 288)
+# print image_letterbox[0]
 
-det(image_letterbox, '10001', pic)
+image2 = cv2.imread(pic)
+image2 = cv2_to_numpy(image2)
+print image2.shape
+# f = open('/home/simon/DeepLearning/caffe/input_image.csv', 'w')
+# for x in range(image2.shape[0]):
+# 	for y in range(image2.shape[1]):
+# 		for k in range(image2.shape[2]):
+# 			f.write(str(image2[x][y][k]))
+# 			if k < image2.shape[2] - 1:
+# 				f.write(',')
+# 		f.write('\n')
+# f.close()
+image_letterbox2 = letterbox_image(image2, 288, 288)
+f = open('/home/simon/DeepLearning/caffe/letterbox_image.csv', 'w')
+for x in range(image_letterbox2.shape[0]):
+	for y in range(image_letterbox2.shape[1]):
+		for k in range(image_letterbox2.shape[2]):
+			f.write(str(image_letterbox2[x][y][k]))
+			if k < image_letterbox2.shape[2] - 1:
+				f.write(',')
+		f.write('\n')
+f.close()
+# det(image_letterbox, '10001', pic)
 # det(image_csv, '10001', pic)
+det(image_letterbox2,'10001',pic)
 print 'over'
 

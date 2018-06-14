@@ -69,6 +69,7 @@ void ScaleLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
     }
     bias_propagate_down_.resize(1, false);
   }
+  iter_=0;
   this->param_propagate_down_.resize(this->blobs_.size(), true);
 }
 
@@ -128,6 +129,22 @@ void ScaleLayer<Dtype>::Forward_cpu(
   const Dtype* scale_data =
       ((bottom.size() > 1) ? bottom[1] : this->blobs_[0].get())->cpu_data();
   Dtype* top_data = top[0]->mutable_cpu_data();
+  //********************************DEBUG SCALE INPUT***************************
+  // char filename[200];
+  // sprintf(filename, "VerifyValid_robby_ball_line0473/scale_input_%d_%d_%d_%d_%d.csv", iter_, bottom[0]->shape(0), bottom[0]->shape(1), bottom[0]->shape(2), bottom[0]->shape(3));
+  // FILE *fp = fopen(filename, "w");
+  // fp = fopen(filename, "w");
+  // if(!fp) LOG(ERROR) << "Couldn't open file: " << filename;
+  // for (int j = 0; j < bottom[0]->shape(1)*bottom[0]->shape(2); j++){
+  //   int spatialSize = bottom[0]->shape(3);
+  //   int k = j*spatialSize;
+  //   for(; k < ((j+1)*spatialSize)-1;k++){
+  //     fprintf(fp,"%f,",bottom_data[k]);
+  //   }
+  //   fprintf(fp,"%f\n",bottom_data[k]);
+  // } 
+  // fflush(fp);
+  //****************************END DEBUG SCALE INPUT****************************
   for (int n = 0; n < outer_dim_; ++n) {
     for (int d = 0; d < scale_dim_; ++d) {
       const Dtype factor = scale_data[d];
@@ -139,6 +156,23 @@ void ScaleLayer<Dtype>::Forward_cpu(
   if (bias_layer_) {
     bias_layer_->Forward(bias_bottom_vec_, top);
   }
+
+  //***************************DEBUG SCALE OUTPUT***************************************
+  // Dtype* temp_top_data = top[0]->mutable_cpu_data();
+  // sprintf(filename, "VerifyValid_robby_ball_line0473/scale_output_%d_%d_%d_%d_%d.csv", iter_, top[0]->shape(0), top[0]->shape(1), top[0]->shape(2), top[0]->shape(3));
+  // fp = fopen(filename, "w");
+  // if(!fp) LOG(ERROR) << "Couldn't open file: " << filename;
+  // for (int j = 0; j < top[0]->shape(1)*top[0]->shape(2); j++){
+  //   int spatialSize = top[0]->shape(3);
+  //   int k = j*spatialSize;
+  //   for(; k < ((j+1)*spatialSize)-1;k++){
+  //     fprintf(fp,"%f,",temp_top_data[k]);
+  //   }
+  //   fprintf(fp,"%f\n",temp_top_data[k]);
+  // }
+  // fflush(fp);
+  //***************************END DEBUG SCALE OUTPUT***********************************
+  iter_++;
 }
 
 template <typename Dtype>

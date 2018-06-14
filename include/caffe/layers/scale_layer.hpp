@@ -77,6 +77,8 @@ class ScaleLayer: public Layer<Dtype> {
   Blob<Dtype> temp_;
   int axis_;
   int outer_dim_, scale_dim_, inner_dim_;
+
+  int iter_;
 };
 
 

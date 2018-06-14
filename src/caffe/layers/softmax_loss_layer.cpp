@@ -136,6 +136,7 @@ void SoftmaxWithLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
             bottom_diff[i * dim + c * inner_num_ + j] = 0;
           }
         } else {
+          // Does subtracting by 1 just create a larger delta in places
           bottom_diff[i * dim + label_value * inner_num_ + j] -= 1;
           ++count;
         }

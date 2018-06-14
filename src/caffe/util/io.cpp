@@ -76,15 +76,77 @@ cv::Mat ReadImageToCVMat(const string& filename,
   int cv_read_flag = (is_color ? CV_LOAD_IMAGE_COLOR :
     CV_LOAD_IMAGE_GRAYSCALE);
   cv::Mat cv_img_origin = cv::imread(filename, cv_read_flag);
+  //*********************************DEBUG iMAGE OUTPUT**********************************************************
+  // LOG(INFO) << "String Length: " << strlen(filename.c_str())+1;
+  // char *c = (char*)malloc(strlen(filename.c_str())+1);
+  // strncpy(c, filename.c_str(), strlen(filename.c_str())+1);
+  // char *next;
+  // while((next = strchr(c,'/')))
+  // {
+  //   c = next+1;
+  // }
+  // char *copy = (char*)malloc(strlen(c)+1);
+  // strncpy(copy, c, strlen(c)+1);
+  // next = strchr(copy,'.');
+  // if (next) *next=0;
+  // char file_name[200];
+  // sprintf(file_name, "VerifyValid_robby_ball_line0473/image_input_%s_%d_%d_%d.csv", copy, cv_img_origin.channels(),cv_img_origin.rows,cv_img_origin.cols);
+  // FILE *fp = fopen(file_name, "w");
+  // if(!fp) LOG(ERROR) << "Could not open or find file " << file_name;;
+  // int i, j, k;
+  // int num = 0;
+  // // Iterate backwards over channels to convert from BGR to RGB
+  // for (i = cv_img_origin.channels()-1; i >= 0; i--){
+  //   for (j = 0; j < cv_img_origin.rows; j++) {
+  //     for (k = 0; k < cv_img_origin.cols; k++) {
+  //       // Values are stored in memory [rows,cols,channels] so convert to [channels,rows,cols]
+  //       int index = j*cv_img_origin.channels()*cv_img_origin.cols + k*cv_img_origin.channels() + i;
+  //       if (((num+1)%cv_img_origin.cols) != 0)
+  //         fprintf(fp,"%f,",cv_img_origin.data[index]/255.0);
+  //       else
+  //         fprintf(fp,"%f\n",cv_img_origin.data[index]/255.0);
+  //       num++;
+  //     }
+  //   }
+  //     // int spatialSize = cv_img_origin.cols;
+  //     // int j = i*spatialSize;
+  //     // for (; j < ((i+1)*spatialSize)-1; j++){
+  //     //     fprintf(fp,"%f,",cv_img_origin.data[j]/255.0);
+  //     // }
+  //     // fprintf(fp,"%f\n",cv_img_origin.data[j]/255.0);
+  // }
+  // fflush(fp);
+  //*****************************END DEBUG IMAGE OUTPUT**************************************************
   if (!cv_img_origin.data) {
     LOG(ERROR) << "Could not open or find file " << filename;
     return cv_img_origin;
   }
   if (height > 0 && width > 0) {
-    cv::resize(cv_img_origin, cv_img, cv::Size(width, height));
+    cv::resize(cv_img_origin, cv_img, cv::Size(width, height), 0, 0, cv::INTER_NEAREST);
   } else {
     cv_img = cv_img_origin;
   }
+  //****************************DEBUG RESIZED IMAGE OUT*************************************************
+  // sprintf(file_name, "VerifyValid_robby_ball_line0473/resize_input_%s_%d_%d_%d.csv", copy, cv_img.channels(),cv_img.rows,cv_img.cols);
+  // fp = fopen(file_name, "w");
+  // if(!fp) LOG(ERROR) << "Could not open or find file " << file_name;;
+  // num = 0;
+  // // Iterate backwards over channels to convert from BGR to RGB
+  // for (i = cv_img.channels()-1; i >= 0; i--){
+  //   for (j = 0; j < cv_img.rows; j++) {
+  //     for (k = 0; k < cv_img.cols; k++) {
+  //       // Values are stored in memory [rows,cols,channels] so convert to [channels,rows,cols]
+  //       int index = j*cv_img.channels()*cv_img.cols + k*cv_img.channels() + i;
+  //       if (((num+1)%cv_img.cols) != 0)
+  //         fprintf(fp,"%f,",cv_img.data[index]/255.0);
+  //       else
+  //         fprintf(fp,"%f\n",cv_img.data[index]/255.0);
+  //       num++;
+  //     }
+  //   }
+  // }
+  // fflush(fp);
+  //*************************END DEBUG RESIZED IMAGE OUT************************************************
   return cv_img;
 }
 
@@ -95,6 +157,11 @@ cv::Mat ReadImageToCVMat(const string& filename,
   int cv_read_flag = (is_color ? CV_LOAD_IMAGE_COLOR :
     CV_LOAD_IMAGE_GRAYSCALE);
   cv::Mat cv_img_origin = cv::imread(filename, cv_read_flag);
+  // LOG(INFO) << "Sample: " << cv_img_origin.type();
+  // LOG(INFO) << "Sample: " << cv_img_origin.at<uint8_t>(0,8,0);
+  cv_img_origin.convertTo(cv_img_origin, CV_32F, 1.f/255);
+  // LOG(INFO) << "FLOAT Sample: " << cv_img_origin.at<float>(0,8,0);
+  // LOG(INFO) << "Sample: " << cv_img_origin.type();
   if (!cv_img_origin.data) {
     LOG(ERROR) << "Could not open or find file " << filename;
     return cv_img_origin;
@@ -113,9 +180,25 @@ cv::Mat ReadImageToCVMat(const string& filename,
     }
     cv::Mat cv_img_resized;
     cv::resize(cv_img_origin, cv_img_resized, cv::Size(new_w, new_h));
+    // LOG(INFO) << "RESIZE Sample: " << cv_img_resized.at<float>(0,8,0);
     cv::Mat cv_img_back(cv::Size(width, height), cv_img_resized.type(), cv::Scalar(0.5));
+    // LOG(INFO) << "BACKGROUND Sample: " << cv_img_back.at<float>(0,8,0);
     cv_img_resized.copyTo(cv_img_back(cv::Rect((width-new_w)/2,(height-new_h)/2,cv_img_resized.cols, cv_img_resized.rows)));
     cv_img = cv_img_back;
+    // LOG(INFO) << "TOTAL Sample: " << cv_img.at<float>(8,8,0) << ","
+    //           << cv_img.at<float>(50,50,0) << ","
+    //           << cv_img.at<float>(100,100,0) << ","
+    //           << cv_img.at<float>(150,150,0) << ","
+    //           << cv_img.at<float>(200,200,0) << ","
+    //           << cv_img.at<float>(280,280,0) << ",";
+    cv_img.convertTo(cv_img, CV_32F, 255);
+    cv_img.convertTo(cv_img, CV_8U);
+    // LOG(INFO) << "TOTAL Sample: " << unsigned(cv_img.at<uint8_t>(8,8,0)) << ","
+    //       << unsigned(cv_img.at<uint8_t>(50,50,0)) << ","
+    //       << unsigned(cv_img.at<uint8_t>(100,100,0)) << ","
+    //       << unsigned(cv_img.at<uint8_t>(150,150,0)) << ","
+    //       << unsigned(cv_img.at<uint8_t>(200,200,0)) << ","
+    //       << unsigned(cv_img.at<uint8_t>(280,280,0)) << ",";
   } else {
     cv_img = cv_img_origin;
   }
@@ -273,7 +356,7 @@ bool ReadBoxDataToDatum(const string& filename, const vector<int>& labels,
     const vector<float>& x_centers, const vector<float>& y_centers, const vector<float>& widths,
     const vector<float>& heights, const int height, const int width,
     const bool is_color, const std::string & encoding, Datum* datum) {
-  cv::Mat cv_img = ReadImageToCVMat(filename, height, width, is_color, true);
+  cv::Mat cv_img = ReadImageToCVMat(filename, height, width, is_color);
   // std::cout << "Rows: " << cv_img.rows << "\n";
   if (cv_img.data) {
     if (encoding.size()) {

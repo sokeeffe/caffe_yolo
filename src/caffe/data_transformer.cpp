@@ -143,6 +143,7 @@ void DataTransformer<Dtype>::Transform(const Datum& datum,
       cv_img = DecodeDatumToCVMatNative(datum);
     }
     // Transform the cv::image into blob.
+    // LOG(INFO) << "\tType: " << cv_img.type() << "," << cv_img.depth();
     return Transform(cv_img, transformed_blob);
 #else
     LOG(FATAL) << "Encoded datum requires OpenCV; compile with USE_OPENCV.";
@@ -299,7 +300,7 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
     const uchar* ptr = cv_cropped_img.ptr<uchar>(h);
     int img_index = 0;
     for (int w = 0; w < width; ++w) {
-      for (int c = 0; c < img_channels; ++c) {
+      for (int c = img_channels-1; c >= 0; --c) {
         if (do_mirror) {
           top_index = (c * height + h) * width + (width - 1 - w);
         } else {
@@ -319,9 +320,14 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
             transformed_data[top_index] = pixel * scale;
           }
         }
+        // Normalize image between 0 and 1
+        transformed_data[top_index] = transformed_data[top_index]/255;
       }
     }
   }
+  // LOG(INFO) << "\tARRAY Transformed Data: " << transformed_data[41323] << ","
+  //   << transformed_data[2889] << "," << transformed_data[41325]
+  //   << "," << transformed_data[41326];
 }
 #endif  // USE_OPENCV
 

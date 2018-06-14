@@ -38,6 +38,8 @@ void RegionLayer<Dtype>::LayerSetUp(
 
   thresh_ = param.thresh();
 
+  iter_ = 0;
+
   for (int c = 0; c < param.biases_size(); ++c) {
      biases_.push_back(param.biases(c)); 
   }
@@ -83,6 +85,23 @@ void RegionLayer<Dtype>::Forward_cpu(
       }
     }
   }
+  //*******************************DEBUG REGION OUTPUT***************************************
+  // char filename[200];
+  // sprintf(filename, "VerifyTest_alfie_lm_ball_line0313/region_output_%d_%d_%d_%d_%d.csv", iter_, top[0]->shape(0), top[0]->shape(1), top[0]->shape(2), top[0]->shape(3));
+  // FILE *fp = fopen(filename, "w");
+  // fp = fopen(filename, "w");
+  // if(!fp) LOG(ERROR) << "Couldn't open file: " << filename;
+  // for (int i = 0; i < top[0]->shape(1)*top[0]->shape(2); i++){
+  //   int spatialSize = top[0]->shape(3);
+  //   int j = i*spatialSize;
+  //   for(; j < ((i+1)*spatialSize)-1;j++){
+  //     fprintf(fp,"%f,",top_data[j]);
+  //   }
+  //   fprintf(fp,"%f\n",top_data[j]);
+  // }
+  // fflush(fp);
+  //*******************************END DEBUG REGION OUTPUT**********************************
+  iter_++;
 }
 
 template <typename Dtype>

@@ -46,6 +46,8 @@ protected:
 
   float thresh_;
 
+  int iter_;
+
   vector<Dtype> biases_;
 };
 

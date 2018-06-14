@@ -5,6 +5,13 @@
 namespace caffe {
 
 template <typename Dtype>
+void ConvolutionLayer<Dtype>::LayerSetUp(
+    const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
+  BaseConvolutionLayer<Dtype>::LayerSetUp(bottom, top);
+  iter_ = 0;
+}
+
+template <typename Dtype>
 void ConvolutionLayer<Dtype>::compute_output_shape() {
   const int* kernel_shape_data = this->kernel_shape_.cpu_data();
   const int* stride_data = this->stride_.cpu_data();
@@ -28,6 +35,38 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   for (int i = 0; i < bottom.size(); ++i) {
     const Dtype* bottom_data = bottom[i]->cpu_data();
     Dtype* top_data = top[i]->mutable_cpu_data();
+    //****************************DEBUG CONV LAYER******************************************
+    // char filename[200];
+    // sprintf(filename, "VerifyValid_robby_ball_line0473/conv_input_%d_%d_%d_%d_%d.csv", iter_, bottom[i]->shape(0), bottom[i]->shape(1), bottom[i]->shape(2), bottom[i]->shape(3));
+    // FILE *fp = fopen(filename, "w");
+    // fp = fopen(filename, "w");
+    // if(!fp) LOG(ERROR) << "Couldn't open file: " << filename;
+    // for (int j = 0; j < bottom[i]->shape(1)*bottom[i]->shape(2); j++){
+    //   int spatialSize = bottom[i]->shape(3);
+    //   int k = j*spatialSize;
+    //   for(; k < ((j+1)*spatialSize)-1;k++){
+    //     fprintf(fp,"%f,",bottom_data[k]);
+    //   }
+    //   fprintf(fp,"%f\n",bottom_data[k]);
+    // } 
+    // fflush(fp);
+    // sprintf(filename, "VerifyValid_robby_ball_line0473/conv_weights_%d_%d_%d_%d_%d.csv", iter_, bottom[i]->shape(0), bottom[i]->shape(1), bottom[i]->shape(2), bottom[i]->shape(3));
+    // fp = fopen(filename, "w");
+    // if(!fp) LOG(ERROR) << "Couldn't open file: " << filename;
+    // for (int j = 0; j < this->blobs_[0]->shape(0); j++){
+    //   for (int k = 0; k < this->blobs_[0]->shape(1); k++) {
+    //     for (int p = 0; p < this->blobs_[0]->shape(2); p++) {
+    //       for (int q = 0; q < this->blobs_[0]->shape(3); q++) {
+    //         if (q < this->blobs_[0]->shape(3)-1)
+    //           fprintf(fp,"%f,",this->blobs_[0]->data_at(j,k,p,q));
+    //         else
+    //           fprintf(fp,"%f\n",this->blobs_[0]->data_at(j,k,p,q));
+    //       }
+    //     }
+    //   }
+    // } 
+    // fflush(fp);
+    //***************************END DEBUG CONV LAYER***************************************
     for (int n = 0; n < this->num_; ++n) {
       this->forward_cpu_gemm(bottom_data + n * this->bottom_dim_, weight,
           top_data + n * this->top_dim_);
@@ -36,7 +75,22 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
         this->forward_cpu_bias(top_data + n * this->top_dim_, bias);
       }
     }
+    //***************************DEBUG CONV OUT LAYER***************************************
+    // sprintf(filename, "VerifyValid_robby_ball_line0473/conv_output_%d_%d_%d_%d_%d.csv", iter_, bottom[i]->shape(0), bottom[i]->shape(1), bottom[i]->shape(2), bottom[i]->shape(3));
+    // fp = fopen(filename, "w");
+    // if(!fp) LOG(ERROR) << "Couldn't open file: " << filename;
+    // for (int j = 0; j < top[i]->shape(1)*top[i]->shape(2); j++){
+    //   int spatialSize = top[i]->shape(3);
+    //   int k = j*spatialSize;
+    //   for(; k < ((j+1)*spatialSize)-1;k++){
+    //     fprintf(fp,"%f,",top_data[k]);
+    //   }
+    //   fprintf(fp,"%f\n",top_data[k]);
+    // }
+    // fflush(fp);
+    //***************************END DEBUG CONV OUT LAYER***********************************
   }
+  iter_++;
 }
 
 template <typename Dtype>

@@ -46,6 +46,7 @@ void BatchNormLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
           << "parameters.";
     }
   }
+  iter_ = 0;
 }
 
 template <typename Dtype>
@@ -96,6 +97,20 @@ void BatchNormLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   }
 
   if (use_global_stats_) {
+    //*************************DEBUG BATCH NORM**********************
+    // LOG(INFO) << "USING GLOBAL STATS";
+    // char filename[200];
+    // sprintf(filename, "VerifyValid_robby_ball_line0473/bn_weights_%d_%d_%d_%d_%d.csv", iter_, bottom[0]->shape(0), bottom[0]->shape(1), bottom[0]->shape(2), bottom[0]->shape(3));
+    // FILE *fp = fopen(filename, "w");
+    // fp = fopen(filename, "w");
+    // if(!fp) LOG(ERROR) << "Couldn't open file: " << filename;
+    // for (int i = 0; i < this->blobs_[0]->shape(0); i++) {
+    //   fprintf(fp,"%f,",this->blobs_[0]->data_at(i,0,0,0));
+    //   fprintf(fp,"%f,",this->blobs_[1]->data_at(i,0,0,0));
+    //   fprintf(fp,"%f\n",this->blobs_[2]->data_at(0,0,0,0));
+    // }
+    // fflush(fp);
+    //************************END DEBUG BATCH NORM*******************
     // use the stored mean/variance estimates.
     const Dtype scale_factor = this->blobs_[2]->cpu_data()[0] == 0 ?
         0 : 1 / this->blobs_[2]->cpu_data()[0];
@@ -163,6 +178,7 @@ void BatchNormLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   //                 might clobber the data.  Can we skip this if they won't?
   caffe_copy(x_norm_.count(), top_data,
       x_norm_.mutable_cpu_data());
+  iter_++;
 }
 
 template <typename Dtype>
