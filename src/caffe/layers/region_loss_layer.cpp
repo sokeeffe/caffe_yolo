@@ -141,7 +141,8 @@ void RegionLossLayer<Dtype>::LayerSetUp(
   noobject_scale_ = param.noobject_scale();
   coord_scale_ = param.coord_scale();
 
-  iter_ = 0;
+  train_iter_ = 0;
+  test_iter_ = 0;
 
   thresh_ = param.thresh();
 
@@ -178,7 +179,10 @@ void RegionLossLayer<Dtype>::Forward_cpu(
   // //         << delta_.shape(3);
 
   // char filename[200];
-  // sprintf(filename, "VerifyValid_robby_ball_line0473/region_output_%d_%d_%d_%d_%d.csv", iter_, prob_.shape(0), prob_.shape(1), prob_.shape(2), prob_.shape(3));
+  // if (this->phase_ == TEST)
+  //   sprintf(filename, "VerifyTrain/region_output_test_%d_%d_%d_%d_%d.csv", test_iter_, prob_.shape(0), prob_.shape(1), prob_.shape(2), prob_.shape(3));
+  // else
+  //   sprintf(filename, "VerifyTrain/region_output_train_%d_%d_%d_%d_%d.csv", train_iter_, prob_.shape(0), prob_.shape(1), prob_.shape(2), prob_.shape(3));
   // FILE *fp = fopen(filename, "w");
   // fp = fopen(filename, "w");
   // if(!fp) LOG(ERROR) << "Couldn't open file: " << filename;
@@ -320,13 +324,16 @@ void RegionLossLayer<Dtype>::Forward_cpu(
   Dtype loss = pow(mag_array(delta_data, delta_.count()),2);
 
   top[0]->mutable_cpu_data()[0] = loss;
-  LOG(INFO) << "Region Avg IOU: " << avg_iou/count << ", Class: " << avg_cat/class_count 
-      << ", Obj: " << avg_obj/count << ", No Obj: " << avg_anyobj/(side_*side_*num_*bottom[0]->num())
-      << ", Avg Recall: " << recall/count << ", count: " << count;
-  LOG(INFO) << "LOSS: " << loss;
+  // LOG(INFO) << "Region Avg IOU: " << avg_iou/count << ", Class: " << avg_cat/class_count 
+  //     << ", Obj: " << avg_obj/count << ", No Obj: " << avg_anyobj/(side_*side_*num_*bottom[0]->num())
+  //     << ", Avg Recall: " << recall/count << ", count: " << count;
+  // LOG(INFO) << "LOSS: " << loss;
 
   //*****************************************DEBUG REGION LOSS***************************************************************
-  // sprintf(filename, "VerifyValid_robby_ball_line0473/region_delta_%d_%d_%d_%d_%d.csv", iter_, delta_.shape(0), delta_.shape(1), delta_.shape(2), delta_.shape(3));
+  // if(this->phase_ == TEST)
+  //   sprintf(filename, "VerifyTrain/region_delta_test_%d_%d_%d_%d_%d.csv", test_iter_, delta_.shape(0), delta_.shape(1), delta_.shape(2), delta_.shape(3));
+  // else
+  //   sprintf(filename, "VerifyTrain/region_delta_train_%d_%d_%d_%d_%d.csv", train_iter_, delta_.shape(0), delta_.shape(1), delta_.shape(2), delta_.shape(3));
   // fp = fopen(filename, "w");
   // if(!fp) LOG(ERROR) << "Couldn't open file: " << filename;
   // for (int i = 0; i < delta_.shape(1)*delta_.shape(2); i++){
@@ -339,14 +346,17 @@ void RegionLossLayer<Dtype>::Forward_cpu(
   // }
   // fflush(fp);
 
-  // sprintf(filename, "VerifyValid_robby_ball_line0473/region_loss_%d_%d_%d_%d_%d.csv", iter_, delta_.shape(0), delta_.shape(1), delta_.shape(2), delta_.shape(3));
+  // if(this->phase_ == TEST)
+  //   sprintf(filename, "VerifyTrain/region_loss_test_%d_%d_%d_%d_%d.csv", test_iter_, delta_.shape(0), delta_.shape(1), delta_.shape(2), delta_.shape(3));
+  // else
+  //   sprintf(filename, "VerifyTrain/region_loss_train_%d_%d_%d_%d_%d.csv", test_iter_, delta_.shape(0), delta_.shape(1), delta_.shape(2), delta_.shape(3));
   // fp = fopen(filename, "w");
   // if(!fp) LOG(ERROR) << "Couldn't open file: " << filename;
   // fprintf(fp,"%f,",loss);
   // fflush(fp);
   //*****************************************END DEBUG REGION LOSS************************************************************
 
-  iter_ += 1;
+  test_iter_++;
 }
 
 template <typename Dtype>
@@ -373,6 +383,23 @@ void RegionLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
         }
       }
     }
+    //************************DEBUG REGION BACKPROP**********************************
+    // char filename[200];
+    // sprintf(filename, "VerifyTrain/region_delta_back_train_%d_%d_%d_%d_%d.csv", train_iter_, bottom[0]->shape(0), bottom[0]->shape(1), bottom[0]->shape(2), bottom[0]->shape(3));
+    // FILE *fp = fopen(filename, "w");
+    // fp = fopen(filename, "w");
+    // if(!fp) LOG(ERROR) << "Couldn't open file: " << filename;
+    // for (int i = 0; i < bottom[0]->shape(1)*bottom[0]->shape(2); i++){
+    //   int spatialSize = bottom[0]->shape(3);
+    //   int j = i*spatialSize;
+    //   for(; j < ((i+1)*spatialSize)-1;j++){
+    //     fprintf(fp,"%f,",bottom_diff[j]);
+    //   }
+    //   fprintf(fp,"%f\n",bottom_diff[j]);
+    // }
+    // fflush(fp);
+    //**********************END DEBUG REGION BACKPROP********************************
+    train_iter_++;
   }
 }
 

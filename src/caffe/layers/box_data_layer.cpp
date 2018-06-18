@@ -126,7 +126,7 @@ void BoxDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 
     //******************************DEBUG LOAD IMAGE LMDB************************************
     // char file_name[200];
-    // sprintf(file_name, "VerifyTest_alfie_lm_ball_line0313/lmdb_input_%d_%d_%d_%d.csv", 
+    // sprintf(file_name, "VerifyTrain/lmdb_input_%d_%d_%d_%d.csv", 
     //           iter_, this->transformed_data_.shape(1),
     //           this->transformed_data_.shape(2),this->transformed_data_.shape(3));
     // FILE *fp = fopen(file_name, "w");
@@ -164,7 +164,7 @@ void BoxDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
       }
 
       //*****************************DEBUG LOAD LABELS LMDB********************************
-      // sprintf(file_name, "VerifyTest_alfie_lm_ball_line0313/modified_labels_%d_%d_%d_%d.csv", 
+      // sprintf(file_name, "VerifyTrain/modified_labels_%d_%d_%d_%d.csv", 
       //         iter_, this->transformed_data_.shape(1),
       //         this->transformed_data_.shape(2),this->transformed_data_.shape(3));
       // fp = fopen(file_name, "w");
@@ -180,22 +180,22 @@ void BoxDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
       // fflush(fp);
       // // LOG(INFO) << "\tFLOAT DATA Size: " << (datum.float_data_size()/150)-1;
       // // LOG(INFO) << "\tTOP_LABEL: " << batch->label_.count();
-      // // LOG(INFO) << "\t\tLABEL VALUE: " << datum.float_data(0) << "," 
-      // //     << datum.float_data(1) << "," << datum.float_data(2) << ","
-      // //     << datum.float_data(3) << "," << datum.float_data(4);
-      // // LOG(INFO) << "\t\tLABEL VALUE: " << datum.float_data(5) << "," 
-      // //     << datum.float_data(6) << "," << datum.float_data(7) << ","
-      // //     << datum.float_data(8) << "," << datum.float_data(9);
-      // // LOG(INFO) << "\t\tLABEL VALUE: " << datum.float_data(10) << "," 
-      // //     << datum.float_data(11) << "," << datum.float_data(12) << ","
-      // //     << datum.float_data(13) << "," << datum.float_data(14);
-      // // LOG(INFO) << "\t\tLABEL VALUE: " << datum.float_data(15) << "," 
-      // //     << datum.float_data(16) << "," << datum.float_data(17) << ","
-      // //     << datum.float_data(18) << "," << datum.float_data(19);
-      // // LOG(INFO) << "\t\tLABEL VALUE: " << datum.float_data(20) << "," 
-      // //     << datum.float_data(21) << "," << datum.float_data(22) << ","
-      // //     << datum.float_data(23) << "," << datum.float_data(24);
-      // // LOG(INFO) << "\t\t\tOFFSET: " << this->transformed_data_.data_at(0,0,144,144);
+      // LOG(INFO) << "\t\tLABEL VALUE: " << datum.float_data(0) << "," 
+      //     << datum.float_data(1) << "," << datum.float_data(2) << ","
+      //     << datum.float_data(3) << "," << datum.float_data(4);
+      // LOG(INFO) << "\t\tLABEL VALUE: " << datum.float_data(5) << "," 
+      //     << datum.float_data(6) << "," << datum.float_data(7) << ","
+      //     << datum.float_data(8) << "," << datum.float_data(9);
+      // LOG(INFO) << "\t\tLABEL VALUE: " << datum.float_data(10) << "," 
+      //     << datum.float_data(11) << "," << datum.float_data(12) << ","
+      //     << datum.float_data(13) << "," << datum.float_data(14);
+      // LOG(INFO) << "\t\tLABEL VALUE: " << datum.float_data(15) << "," 
+      //     << datum.float_data(16) << "," << datum.float_data(17) << ","
+      //     << datum.float_data(18) << "," << datum.float_data(19);
+      // LOG(INFO) << "\t\tLABEL VALUE: " << datum.float_data(20) << "," 
+      //     << datum.float_data(21) << "," << datum.float_data(22) << ","
+      //     << datum.float_data(23) << "," << datum.float_data(24);
+      // LOG(INFO) << "\t\t\tOFFSET: " << this->transformed_data_.data_at(0,0,144,144);
       //*****************************END LOAD DEBUG LABELS LMDB*****************************
     }
     trans_time += timer.MicroSeconds();
