@@ -343,8 +343,8 @@ def det(image, image_id, pic):
 			probs[index,1] = scale*output_dim[0,class_index+1,row,col]
 			probs[index,2] = scale*output_dim[0,class_index+2,row,col]
 			probs[index,3] = scale*output_dim[0,class_index+3,row,col]
-			probs[index,4] = max(probs[index,0:3])	
-			if scale > 0.9:
+			probs[index,4] = max(probs[index,0:4])
+			if scale > 0.728	:
 				print obj_index
 				print box_index
 				print scale
