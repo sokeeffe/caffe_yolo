@@ -154,13 +154,13 @@ void BoxDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
     //******************************END DEBUG LOAD IMAGE LMDB********************************
     // Copy label.
     if (this->output_labels_) {
-
+      int label_offset = batch->label_.offset(item_id);
       Dtype* top_label = batch->label_.mutable_cpu_data();
-      top_label[item_id] = datum.label();
+      // top_label[item_id] = datum.label();
       // LOG(INFO) << "KEY: " << cursor_->key();
       int index = (datum.float_data_size()/150)-1;
       for (int i = 0; i < 150; ++i) {
-        top_label[i] = datum.float_data((index*150)+i);
+        top_label[label_offset+i] = datum.float_data((index*150)+i);
       }
 
       //*****************************DEBUG LOAD LABELS LMDB********************************
