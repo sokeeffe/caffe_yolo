@@ -66,6 +66,16 @@ inline int entry_index(int side, int num_classes, int num, int coords, int batch
     return batch*side*side*num*(coords+num_classes+1) + n*side*side*(coords+num_classes+1) + entry*side*side + loc;
 }
 
+template <typename Dtype>
+vector<Dtype> get_cell_box(const Dtype* x, int i, int j, int w, int h) {
+  vector<Dtype> b;
+  b.clear();
+  b.push_back((i+0.5)/w);
+  b.push_back((j+0.5)/h);
+  b.push_back(1/w);
+  b.push_back(1/h);
+  return b;
+}
 
 template <typename Dtype>
 void delta_object_class(const Dtype* input_data, Dtype* delta, int index, int class_label, int classes, float scale, int stride, float* avg_cat)
@@ -169,121 +179,43 @@ void ObjectLossLayer<Dtype>::Forward_cpu(
   float avg_anyobj = 0;
   int count = 0;
   int class_count = 0;
-  for (int b = 0; b < bottom[0]->num(); b++) {
-    // for(int j = 0; j < side_; j++) {
-    //   for(int i = 0; i < side_; i++) {
-    //     for(int n = 0; n < num_; n++) {
-    //       // int box_index = b*side_*side_*num_*(num_classes_+coords_+1) + 
-    //       //                 n*side_*side_*(num_classes_+coords_+1) +
-    //       //                 j*side_ + i;
-    //       int box_index = entry_index(side_, num_classes_, num_, coords_, b, n*side_*side_+j*side_+i, 0);
-    //       // LOG(INFO) << box_index << ": " << prob_data[box_index];
-    //       vector<Dtype> pred;
-    //       pred.clear();
-    //       pred = get_region_box(prob_data, biases_, n, box_index, i, j, side_, side_);
-    //       // LOG(INFO) << "Box Pred: " << pred[0] << " " << pred[1] << " " << pred[2] << " " << pred[3];
-    //       float best_iou = 0;
-    //       for (int t = 0; t < 30; t++) {
-    //         vector<Dtype> truth;
-    //         truth.clear();
-    //         Dtype x = label_data[b*30*5 + t*5 + 1];
-    //         Dtype y = label_data[b*30*5 + t*5 + 2];
-    //         Dtype w = label_data[b*30*5 + t*5 + 3];
-    //         Dtype h = label_data[b*30*5 + t*5 + 4];
+  for (int b = 0; b < bottom[0]->shape(0); b++) {
+    for(int j = 0; j < side_; j++) {
+      for(int i = 0; i < side_; i++) {
+        vector<Dtype> pred;
+        pred.clear();
+        pred = get_cell_box(prob_data, i, j, side_, side_);
+        LOG(INFO) << "Box Pred: " << pred[0] << " " << pred[1] << " " << pred[2] << " " << pred[3];
+        float best_iou = 0;
+        for (int t = 0; t < 30; t++) {
+          vector<Dtype> truth;
+          truth.clear();
+          Dtype x = label_data[b*30*5 + t*5 + 1];
+          Dtype y = label_data[b*30*5 + t*5 + 2];
+          Dtype w = label_data[b*30*5 + t*5 + 3];
+          Dtype h = label_data[b*30*5 + t*5 + 4];
 
-    //         if (!x) break;
-    //         truth.push_back(x);
-    //         truth.push_back(y);
-    //         truth.push_back(w);
-    //         truth.push_back(h);
-    //         // LOG(INFO) << "Box Truth: " << truth[0] << " " << truth[1] << " " << truth[2] << " " << truth[3];
-    //         Dtype iou = calc_iou(pred, truth);
-    //         if(iou > best_iou) {
-    //           best_iou = iou;
-    //           // LOG(INFO) << "IOU: " << iou;
-    //         }
-    //       }
-    //       int obj_index = entry_index(side_, num_classes_, num_, coords_, b, n*side_*side_+j*side_+i, coords_);
-    //       avg_anyobj += prob_data[obj_index];
-    //       delta_data[obj_index] = noobject_scale_ * (0 - prob_data[obj_index]);
-    //       // LOG(INFO) << "Obj_prob: " << prob_data[obj_index] << "\tObj_Index: " << obj_index << "\tDelta: " << delta_data[obj_index] << "\tThresh: " << thresh_;
-    //       if (best_iou > thresh_) {
-    //         delta_data[obj_index] = 0;
-    //       }
-
-    //       // Code only executed in darknet framework in early stages of training
-    //       // vector<Dtype> truth;
-    //       // truth.clear();
-    //       // truth.push_back((i + .5) / side_);
-    //       // truth.push_back((j + .5) / side_);
-    //       // truth.push_back((biases_[2 * n]) / side_); //anchor boxes
-    //       // truth.push_back((biases_[2 * n + 1]) / side_);
-    //       // delta_region_box(truth, prob_data, biases_, n, box_index, i, j, side_, side_, delta_data, .01);
-    //     }
-    //   }
-    // }
-    // for (int t = 0; t < 30; t++) {
-    //   vector<Dtype> truth;
-    //   truth.clear();
-    //   int class_label = label_data[b*30*5 + t*5 + 0];
-    //   Dtype x = label_data[b*30*5 + t*5 + 1];
-    //   Dtype y = label_data[b*30*5 + t*5 + 2];
-    //   Dtype w = label_data[b*30*5 + t*5 + 3];
-    //   Dtype h = label_data[b*30*5 + t*5 + 4];
-    //   if (!x) break;
-    //   truth.push_back(x);
-    //   truth.push_back(y);
-    //   truth.push_back(w);
-    //   truth.push_back(h);
-    //   float best_iou = 0;
-    //   int best_n = 0;
-    //   int i = truth[0] * side_; //match which i,j
-    //   int j = truth[1] * side_;
-
-    //   vector<Dtype> truth_shift;
-    //   truth_shift.clear();
-    //   truth_shift.push_back(0);
-    //   truth_shift.push_back(0);
-    //   truth_shift.push_back(w);
-    //   truth_shift.push_back(h);
-
-    //   for (int n = 0; n < num_; ++ n){
-    //     int box_index = entry_index(side_, num_classes_, num_, coords_, b, n*side_*side_+j*side_+i, 0);
-    //     vector<Dtype> pred;
-    //     pred.clear();
-    //     pred = get_region_box(prob_data, biases_, n, box_index, i, j, side_, side_);
-
-    //     // The following two lines should be conditioned on bias_match, leaving out since we always have 1
-    //     pred[2] = biases_[2 * n] / side_;
-    //     pred[3] = biases_[2 * n + 1] / side_;
-    //     pred[0] = 0;
-    //     pred[1] = 0;
-    //     float iou = calc_iou(pred, truth_shift);
-    //     if (iou > best_iou) {
-    //       best_iou = iou;
-    //       best_n = n;
-    //     }
-    //     // LOG(INFO) << "Box Truth: " << truth[0] << " " << truth[1] << " " << truth[2] << " " << truth[3];
-    //     // LOG(INFO) << "Box index: " << box_index;
-    //     // LOG(INFO) << "Box Pred: " << pred[0] << " " << pred[1] << " " << pred[2] << " " << pred[3];
-    //   }
-    //   int box_index = entry_index(side_, num_classes_, num_, coords_, b, best_n*side_*side_+j*side_+i, 0);
-    //   float iou = delta_region_box(truth, prob_data, biases_, best_n, box_index, i, j, side_, side_, delta_data, coord_scale_ *  (2 - w*h));
-    //   // LOG(INFO) << "CoordScale: " << coord_scale_ << " W: " << w << " H: " << h;
-    //   // LOG(INFO) << "Box index: " << box_index << "\tIOU: " << iou;
-    //   if (iou > 0.5) recall += 1;
-    //   avg_iou += iou;
-    //   int obj_index = entry_index(side_, num_classes_, num_, coords_, b, best_n*side_*side_+j*side_+i, coords_);
-    //   avg_obj += prob_data[obj_index];
-    //   delta_data[obj_index] = object_scale_ * (1 - prob_data[obj_index]);
-    //   // LOG(INFO) << "ObjIndex: " << obj_index << " ObjectScale: " << object_scale_ 
-    //   //       << " out: " << prob_data[obj_index] << " delta: " << delta_data[obj_index];
-
-    //   int class_index = entry_index(side_, num_classes_, num_, coords_, b, best_n*side_*side_+j*side_+i, coords_ + 1);
-    //   delta_region_class(prob_data, delta_data, class_index, class_label, num_classes_, class_scale_, side_*side_, &avg_cat);
-    //   ++count;
-    //   ++class_count;
-    // }
+          if (!x) break;
+          truth.push_back(x);
+          truth.push_back(y);
+          truth.push_back(w);
+          truth.push_back(h);
+          // LOG(INFO) << "Box Truth: " << truth[0] << " " << truth[1] << " " << truth[2] << " " << truth[3];
+          Dtype iou = calc_iou(pred, truth);
+          if(iou > best_iou) {
+            best_iou = iou;
+            // LOG(INFO) << "IOU: " << iou;
+          }
+        }
+        int obj_index = b*side_*side_+j*side_+i;
+        // int obj_index = entry_index(side_, num_classes_, num_, coords_, b, n*side_*side_+j*side_+i, coords_);
+          // avg_anyobj += prob_data[obj_index];
+        if (best_iou > 0)
+          delta_data[obj_index] = noobject_scale_ * (1 - prob_data[obj_index]);
+        else
+          delta_data[obj_index] = noobject_scale_ * (0 - prob_data[obj_index]);
+      }
+    }
   }
   Dtype loss = pow(mag_array(delta_data, delta_.count()),2);
 
