@@ -178,23 +178,23 @@ void RegionLossLayer<Dtype>::Forward_cpu(
   // //         << delta_.shape(1) << "," << delta_.shape(2) << ","
   // //         << delta_.shape(3);
 
-  // char filename[200];
-  // if (this->phase_ == TEST)
-  //   sprintf(filename, "VerifyTrain/region_output_test_%d_%d_%d_%d_%d.csv", test_iter_, prob_.shape(0), prob_.shape(1), prob_.shape(2), prob_.shape(3));
-  // else
-  //   sprintf(filename, "VerifyTrain/region_output_train_%d_%d_%d_%d_%d.csv", train_iter_, prob_.shape(0), prob_.shape(1), prob_.shape(2), prob_.shape(3));
-  // FILE *fp = fopen(filename, "w");
-  // fp = fopen(filename, "w");
-  // if(!fp) LOG(ERROR) << "Couldn't open file: " << filename;
-  // for (int i = 0; i < prob_.shape(1)*prob_.shape(2); i++){
-  //   int spatialSize = prob_.shape(3);
-  //   int j = i*spatialSize;
-  //   for(; j < ((i+1)*spatialSize)-1;j++){
-  //     fprintf(fp,"%f,",prob_data[j]);
-  //   }
-  //   fprintf(fp,"%f\n",prob_data[j]);
-  // }
-  // fflush(fp);
+  char filename[200];
+  if (this->phase_ == TEST)
+    sprintf(filename, "VerifyShuffle/region_output_test_%d_%d_%d_%d_%d.csv", test_iter_, prob_.shape(0), prob_.shape(1), prob_.shape(2), prob_.shape(3));
+  else
+    sprintf(filename, "VerifyShuffle/region_output_train_%d_%d_%d_%d_%d.csv", train_iter_, prob_.shape(0), prob_.shape(1), prob_.shape(2), prob_.shape(3));
+  FILE *fp = fopen(filename, "w");
+  fp = fopen(filename, "w");
+  if(!fp) LOG(ERROR) << "Couldn't open file: " << filename;
+  for (int i = 0; i < prob_.shape(1)*prob_.shape(2); i++){
+    int spatialSize = prob_.shape(3);
+    int j = i*spatialSize;
+    for(; j < ((i+1)*spatialSize)-1;j++){
+      fprintf(fp,"%f,",prob_data[j]);
+    }
+    fprintf(fp,"%f\n",prob_data[j]);
+  }
+  fflush(fp);
   //********************************END DEBUG REGION OUTPUT LAYER****************************************
 
 
@@ -248,13 +248,13 @@ void RegionLossLayer<Dtype>::Forward_cpu(
           }
 
           // Code only executed in darknet framework in early stages of training
-          // vector<Dtype> truth;
-          // truth.clear();
-          // truth.push_back((i + .5) / side_);
-          // truth.push_back((j + .5) / side_);
-          // truth.push_back((biases_[2 * n]) / side_); //anchor boxes
-          // truth.push_back((biases_[2 * n + 1]) / side_);
-          // delta_region_box(truth, prob_data, biases_, n, box_index, i, j, side_, side_, delta_data, .01);
+          vector<Dtype> truth;
+          truth.clear();
+          truth.push_back((i + .5) / side_);
+          truth.push_back((j + .5) / side_);
+          truth.push_back((biases_[2 * n]) / side_); //anchor boxes
+          truth.push_back((biases_[2 * n + 1]) / side_);
+          delta_region_box(truth, prob_data, biases_, n, box_index, i, j, side_, side_, delta_data, .01);
         }
       }
     }
@@ -311,7 +311,7 @@ void RegionLossLayer<Dtype>::Forward_cpu(
       avg_iou += iou;
       int obj_index = entry_index(side_, num_classes_, num_, coords_, b, best_n*side_*side_+j*side_+i, coords_);
       avg_obj += prob_data[obj_index];
-      delta_data[obj_index] = object_scale_ * (iou - prob_data[obj_index]);
+      delta_data[obj_index] = object_scale_ * (1 - prob_data[obj_index]);
       // LOG(INFO) << "ObjIndex: " << obj_index << " ObjectScale: " << object_scale_ 
       //       << " out: " << prob_data[obj_index] << " delta: " << delta_data[obj_index];
 
@@ -383,6 +383,8 @@ void RegionLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
         }
       }
     }
+    for (int i = 0; i < bottom[0]->count(); i++)
+      bottom_diff[i] *= -1;
     //************************DEBUG REGION BACKPROP**********************************
     // char filename[200];
     // sprintf(filename, "VerifyTrain/region_delta_back_train_%d_%d_%d_%d_%d.csv", train_iter_, bottom[0]->shape(0), bottom[0]->shape(1), bottom[0]->shape(2), bottom[0]->shape(3));
