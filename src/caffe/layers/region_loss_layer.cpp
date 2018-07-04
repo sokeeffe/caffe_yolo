@@ -178,23 +178,27 @@ void RegionLossLayer<Dtype>::Forward_cpu(
   // //         << delta_.shape(1) << "," << delta_.shape(2) << ","
   // //         << delta_.shape(3);
 
-  char filename[200];
-  if (this->phase_ == TEST)
-    sprintf(filename, "VerifyShuffle/region_output_test_%d_%d_%d_%d_%d.csv", test_iter_, prob_.shape(0), prob_.shape(1), prob_.shape(2), prob_.shape(3));
-  else
-    sprintf(filename, "VerifyShuffle/region_output_train_%d_%d_%d_%d_%d.csv", train_iter_, prob_.shape(0), prob_.shape(1), prob_.shape(2), prob_.shape(3));
-  FILE *fp = fopen(filename, "w");
-  fp = fopen(filename, "w");
-  if(!fp) LOG(ERROR) << "Couldn't open file: " << filename;
-  for (int i = 0; i < prob_.shape(1)*prob_.shape(2); i++){
-    int spatialSize = prob_.shape(3);
-    int j = i*spatialSize;
-    for(; j < ((i+1)*spatialSize)-1;j++){
-      fprintf(fp,"%f,",prob_data[j]);
-    }
-    fprintf(fp,"%f\n",prob_data[j]);
-  }
-  fflush(fp);
+  // char filename[200];
+  // FILE *fp;
+  // for (int b = 0; b < bottom[0]->shape(0); b++) {
+  //   if (this->phase_ == TEST)
+  //     sprintf(filename, "VerifyShuffle/region_output_test_%d_%d_%d_%d_%d.csv", test_iter_, b, prob_.shape(1), prob_.shape(2), prob_.shape(3));
+  //   else
+  //     sprintf(filename, "VerifyShuffle/region_output_train_%d_%d_%d_%d_%d.csv", train_iter_, b, prob_.shape(1), prob_.shape(2), prob_.shape(3));
+  //   fp = fopen(filename, "w");
+  //   if(!fp) LOG(ERROR) << "Couldn't open file: " << filename;
+  //   for (int i = 0; i < prob_.shape(1)*prob_.shape(2); i++){
+  //     int spatialSize = prob_.shape(3);
+  //     int featureSize = prob_.shape(1)*prob_.shape(2)*prob_.shape(3);
+  //     int j = b*featureSize + i*spatialSize;
+  //     for(; j < (b*featureSize+(i+1)*spatialSize)-1;j++){
+  //       fprintf(fp,"%f,",prob_data[j]);
+  //     }
+  //     fprintf(fp,"%f\n",prob_data[j]);
+  //   }
+  //   fflush(fp);
+  // }
+
   //********************************END DEBUG REGION OUTPUT LAYER****************************************
 
 
@@ -205,7 +209,7 @@ void RegionLossLayer<Dtype>::Forward_cpu(
   float avg_anyobj = 0;
   int count = 0;
   int class_count = 0;
-  for (int b = 0; b < bottom[0]->num(); b++) {
+  for (int b = 0; b < bottom[0]->shape(0); b++) {
     for(int j = 0; j < side_; j++) {
       for(int i = 0; i < side_; i++) {
         for(int n = 0; n < num_; n++) {
@@ -266,7 +270,9 @@ void RegionLossLayer<Dtype>::Forward_cpu(
       Dtype y = label_data[b*30*5 + t*5 + 2];
       Dtype w = label_data[b*30*5 + t*5 + 3];
       Dtype h = label_data[b*30*5 + t*5 + 4];
+
       if (!x) break;
+
       truth.push_back(x);
       truth.push_back(y);
       truth.push_back(w);

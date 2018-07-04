@@ -70,10 +70,10 @@ template <typename Dtype>
 vector<Dtype> get_cell_box(const Dtype* x, int i, int j, int w, int h) {
   vector<Dtype> b;
   b.clear();
-  b.push_back((i+0.5)/w);
-  b.push_back((j+0.5)/h);
-  b.push_back(1/w);
-  b.push_back(1/h);
+  b.push_back((i+0.5)/(float)w);
+  b.push_back((j+0.5)/(float)h);
+  b.push_back(1.0/(float)w);
+  b.push_back(1.0/(float)h);
   return b;
 }
 
@@ -144,7 +144,7 @@ void ObjectLossLayer<Dtype>::Forward_cpu(
   const Dtype* label_data = bottom[1]->cpu_data();
   caffe_set(delta_.count(), Dtype(0.0), delta_data);
   
-  //************************************DEBUG REGION OUTPUT LAYER****************************************
+  // ************************************DEBUG OBJECT OUTPUT LAYER****************************************
   // // LOG(INFO) << label_data[0] << "," << label_data[1] << "," << label_data[2] << ","
   // //       << label_data[3] << "," << label_data[4];
   // // LOG(INFO) << prob_data[0] << "," << prob_data[1] << "," << prob_data[2];
@@ -154,9 +154,9 @@ void ObjectLossLayer<Dtype>::Forward_cpu(
 
   // char filename[200];
   // if (this->phase_ == TEST)
-  //   sprintf(filename, "VerifyTrain/region_output_test_%d_%d_%d_%d_%d.csv", test_iter_, prob_.shape(0), prob_.shape(1), prob_.shape(2), prob_.shape(3));
+  //   sprintf(filename, "VerifyObject/object_output_test_%d_%d_%d_%d_%d.csv", test_iter_, prob_.shape(0), prob_.shape(1), prob_.shape(2), prob_.shape(3));
   // else
-  //   sprintf(filename, "VerifyTrain/region_output_train_%d_%d_%d_%d_%d.csv", train_iter_, prob_.shape(0), prob_.shape(1), prob_.shape(2), prob_.shape(3));
+  //   sprintf(filename, "VerifyObject/object_output_train_%d_%d_%d_%d_%d.csv", train_iter_, prob_.shape(0), prob_.shape(1), prob_.shape(2), prob_.shape(3));
   // FILE *fp = fopen(filename, "w");
   // fp = fopen(filename, "w");
   // if(!fp) LOG(ERROR) << "Couldn't open file: " << filename;
@@ -169,7 +169,7 @@ void ObjectLossLayer<Dtype>::Forward_cpu(
   //   fprintf(fp,"%f\n",prob_data[j]);
   // }
   // fflush(fp);
-  //********************************END DEBUG REGION OUTPUT LAYER****************************************
+  // ********************************END DEBUG OBJECT OUTPUT LAYER****************************************
 
 
   float avg_iou = 0;
@@ -185,7 +185,8 @@ void ObjectLossLayer<Dtype>::Forward_cpu(
         vector<Dtype> pred;
         pred.clear();
         pred = get_cell_box(prob_data, i, j, side_, side_);
-        LOG(INFO) << "Box Pred: " << pred[0] << " " << pred[1] << " " << pred[2] << " " << pred[3];
+        // LOG(INFO) << "i: " << i << " j: " << j << " side: " << side_;
+        // LOG(INFO) << "Box Pred: " << pred[0] << " " << pred[1] << " " << pred[2] << " " << pred[3];
         float best_iou = 0;
         for (int t = 0; t < 30; t++) {
           vector<Dtype> truth;
@@ -227,9 +228,9 @@ void ObjectLossLayer<Dtype>::Forward_cpu(
 
   //*****************************************DEBUG REGION LOSS***************************************************************
   // if(this->phase_ == TEST)
-  //   sprintf(filename, "VerifyTrain/region_delta_test_%d_%d_%d_%d_%d.csv", test_iter_, delta_.shape(0), delta_.shape(1), delta_.shape(2), delta_.shape(3));
+  //   sprintf(filename, "VerifyObject/object_delta_test_%d_%d_%d_%d_%d.csv", test_iter_, delta_.shape(0), delta_.shape(1), delta_.shape(2), delta_.shape(3));
   // else
-  //   sprintf(filename, "VerifyTrain/region_delta_train_%d_%d_%d_%d_%d.csv", train_iter_, delta_.shape(0), delta_.shape(1), delta_.shape(2), delta_.shape(3));
+  //   sprintf(filename, "VerifyObject/object_delta_train_%d_%d_%d_%d_%d.csv", train_iter_, delta_.shape(0), delta_.shape(1), delta_.shape(2), delta_.shape(3));
   // fp = fopen(filename, "w");
   // if(!fp) LOG(ERROR) << "Couldn't open file: " << filename;
   // for (int i = 0; i < delta_.shape(1)*delta_.shape(2); i++){
@@ -243,12 +244,57 @@ void ObjectLossLayer<Dtype>::Forward_cpu(
   // fflush(fp);
 
   // if(this->phase_ == TEST)
-  //   sprintf(filename, "VerifyTrain/region_loss_test_%d_%d_%d_%d_%d.csv", test_iter_, delta_.shape(0), delta_.shape(1), delta_.shape(2), delta_.shape(3));
+  //   sprintf(filename, "VerifyObject/object_loss_test_%d_%d_%d_%d_%d.csv", test_iter_, delta_.shape(0), delta_.shape(1), delta_.shape(2), delta_.shape(3));
   // else
-  //   sprintf(filename, "VerifyTrain/region_loss_train_%d_%d_%d_%d_%d.csv", test_iter_, delta_.shape(0), delta_.shape(1), delta_.shape(2), delta_.shape(3));
+  //   sprintf(filename, "VerifyObject/object_loss_train_%d_%d_%d_%d_%d.csv", test_iter_, delta_.shape(0), delta_.shape(1), delta_.shape(2), delta_.shape(3));
   // fp = fopen(filename, "w");
   // if(!fp) LOG(ERROR) << "Couldn't open file: " << filename;
   // fprintf(fp,"%f,",loss);
+  // fflush(fp);
+
+  // if(this->phase_ == TEST)
+  //   sprintf(filename, "VerifyObject/object_label_test_%d_%d_%d_%d_%d.csv", test_iter_, delta_.shape(0), delta_.shape(1), delta_.shape(2), delta_.shape(3));
+  // else
+  //   sprintf(filename, "VerifyObject/object_label_train_%d_%d_%d_%d_%d.csv", test_iter_, delta_.shape(0), delta_.shape(1), delta_.shape(2), delta_.shape(3));
+  // fp = fopen(filename, "w");
+  // if(!fp) LOG(ERROR) << "Couldn't open file: " << filename;
+  // for(int j = 0; j < side_; j++) {
+  //   for(int i = 0; i < side_; i++) {
+  //     vector<Dtype> pred;
+  //     pred.clear();
+  //     pred = get_cell_box(prob_data, i, j, side_, side_);
+  //     // LOG(INFO) << "i: " << i << " j: " << j << " side: " << side_;
+  //     // LOG(INFO) << "Box Pred: " << pred[0] << " " << pred[1] << " " << pred[2] << " " << pred[3];
+  //     float best_iou = 0;
+  //     for (int t = 0; t < 30; t++) {
+  //       vector<Dtype> truth;
+  //       truth.clear();
+  //       Dtype x = label_data[t*5 + 1];
+  //       Dtype y = label_data[t*5 + 2];
+  //       Dtype w = label_data[t*5 + 3];
+  //       Dtype h = label_data[t*5 + 4];
+
+  //       if (!x) break;
+  //       truth.push_back(x);
+  //       truth.push_back(y);
+  //       truth.push_back(w);
+  //       truth.push_back(h);
+  //       // LOG(INFO) << "Box Truth: " << truth[0] << " " << truth[1] << " " << truth[2] << " " << truth[3];
+  //       Dtype iou = calc_iou(pred, truth);
+  //       if(iou > best_iou) {
+  //         best_iou = iou;
+  //         // LOG(INFO) << "IOU: " << iou;
+  //       }
+  //     }
+  //     if (best_iou > 0)
+  //       fprintf(fp,"%d",1);
+  //     else
+  //       fprintf(fp,"%d",0);
+  //     if (i != side_-1)
+  //       fprintf(fp,",");
+  //   }
+  //   fprintf(fp,"\n");
+  // }
   // fflush(fp);
   //*****************************************END DEBUG REGION LOSS************************************************************
 

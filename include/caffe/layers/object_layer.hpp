@@ -46,7 +46,8 @@ protected:
 
   float thresh_;
 
-  int iter_;
+  int train_iter_;
+  int test_iter_;
 
   vector<Dtype> biases_;
 };
