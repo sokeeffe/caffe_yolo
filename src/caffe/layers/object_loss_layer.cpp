@@ -313,20 +313,21 @@ void ObjectLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     const Dtype* prob_data = prob_.cpu_data();
     const Dtype* delta_data = delta_.cpu_data();
     caffe_copy(delta_.count(), delta_data, bottom_diff);
-    for (int b = 0; b < bottom[0]->num(); b++) {
-      for (int n = 0; n < num_; n++) {
-        int index = entry_index(side_, num_classes_, num_, coords_, b, n*side_*side_,0);
-        for (int i = index; i < index+(side_*side_*2); ++i) {
-          bottom_diff[i] *= prob_data[i]*(1-prob_data[i]); //LOGISTIC GRADIENT
-        }
-        index = entry_index(side_, num_classes_, num_, coords_, b, n*side_*side_, coords_);
-        for (int i = index; i < index+(side_*side_); ++i) {
-          bottom_diff[i] *= prob_data[i]*(1-prob_data[i]); //LOGISTIC GRADIENT
-        }
-      }
-    }
+    // for (int b = 0; b < bottom[0]->num(); b++) {
+    //   for (int n = 0; n < num_; n++) {
+    //     int index = entry_index(side_, num_classes_, num_, coords_, b, n*side_*side_,0);
+    //     for (int i = index; i < index+(side_*side_*2); ++i) {
+    //       bottom_diff[i] *= prob_data[i]*(1-prob_data[i]); //LOGISTIC GRADIENT
+    //     }
+    //     index = entry_index(side_, num_classes_, num_, coords_, b, n*side_*side_, coords_);
+    //     for (int i = index; i < index+(side_*side_); ++i) {
+    //       bottom_diff[i] *= prob_data[i]*(1-prob_data[i]); //LOGISTIC GRADIENT
+    //     }
+    //   }
+    // }
+
     for (int i=0; i<bottom[0]->count(); i++)
-      bottom_diff[i]*=-1;
+      bottom_diff[i]*= -prob_data[i]*(1-prob_data[i]); //LOGISTIC GRADIENT
     //************************DEBUG REGION BACKPROP**********************************
     // char filename[200];
     // sprintf(filename, "VerifyTrain/region_delta_back_train_%d_%d_%d_%d_%d.csv", train_iter_, bottom[0]->shape(0), bottom[0]->shape(1), bottom[0]->shape(2), bottom[0]->shape(3));
