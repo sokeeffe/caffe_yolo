@@ -37,6 +37,9 @@ class DataTransformer {
    */
   void Transform(const Datum& datum, Blob<Dtype>* transformed_blob);
 
+  void Transform(const Datum& datum, Blob<Dtype>* transformed_blob,
+                float &dx, float &dy, float &nw, float &nh, int &flip);
+
   /**
    * @brief Applies the transformation defined in the data layer's
    * transform_param block to a vector of Datum.
@@ -75,6 +78,9 @@ class DataTransformer {
    *    set_cpu_data() is used. See image_data_layer.cpp for an example.
    */
   void Transform(const cv::Mat& cv_img, Blob<Dtype>* transformed_blob);
+
+  void Transform(const cv::Mat& cv_img, Blob<Dtype>* transformed_blob,
+                float &dx, float &dy, float &nw, float &nh, int &flip);
 #endif  // USE_OPENCV
 
   /**
@@ -137,6 +143,8 @@ class DataTransformer {
    *    A uniformly random integer value from ({0, 1, ..., n-1}).
    */
   virtual int Rand(int n);
+
+  virtual float RandUniform(float min, float max);
 
   void Transform(const Datum& datum, Dtype* transformed_data);
   // Tranformation parameters

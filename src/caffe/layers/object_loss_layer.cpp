@@ -330,7 +330,7 @@ void ObjectLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
       bottom_diff[i]*= -prob_data[i]*(1-prob_data[i]); //LOGISTIC GRADIENT
     //************************DEBUG REGION BACKPROP**********************************
     // char filename[200];
-    // sprintf(filename, "VerifyTrain/region_delta_back_train_%d_%d_%d_%d_%d.csv", train_iter_, bottom[0]->shape(0), bottom[0]->shape(1), bottom[0]->shape(2), bottom[0]->shape(3));
+    // sprintf(filename, "VerifyObject/object_delta_back_train_%d_%d_%d_%d_%d.csv", train_iter_, bottom[0]->shape(0), bottom[0]->shape(1), bottom[0]->shape(2), bottom[0]->shape(3));
     // FILE *fp = fopen(filename, "w");
     // fp = fopen(filename, "w");
     // if(!fp) LOG(ERROR) << "Couldn't open file: " << filename;

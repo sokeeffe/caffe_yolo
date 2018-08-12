@@ -36,8 +36,8 @@ void BoxDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
 
   // Use data_transformer to infer the expected blob shape from datum.
   vector<int> top_shape = this->data_transformer_->InferBlobShape(datum);
-  LOG(INFO) << "TOP_SHAPE " << top_shape[0] << "," << top_shape[1] << ","
-          << top_shape[2] << "," << top_shape[3];
+  // LOG(INFO) << "TOP_SHAPE " << top_shape[0] << "," << top_shape[1] << ","
+  //         << top_shape[2] << "," << top_shape[3];
   this->transformed_data_.Reshape(top_shape);
   // Reshape top[0] and prefetch_data according to the batch_size.
   top_shape[0] = batch_size;
@@ -45,12 +45,12 @@ void BoxDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   for (int i = 0; i < this->prefetch_.size(); ++i) {
     this->prefetch_[i]->data_.Reshape(top_shape);
   }
-  LOG(INFO) << "output data size: " << top[0]->num() << ","
-      << top[0]->channels() << "," << top[0]->height() << ","
-      << top[0]->width();
+  // LOG(INFO) << "output data size: " << top[0]->num() << ","
+  //     << top[0]->channels() << "," << top[0]->height() << ","
+  //     << top[0]->width();
   // label
   if (this->output_labels_) {
-    LOG(INFO) << "LABELS " << this->prefetch_.size();
+    // LOG(INFO) << "LABELS " << this->prefetch_.size();
     vector<int> label_shape(1, batch_size);
     int num_objects = 30; // max number of objects in a class
     int class_coords = 5; // (class + coords, 1+4)
@@ -82,6 +82,110 @@ void BoxDataLayer<Dtype>::Next() {
     cursor_->SeekToFirst();
   }
   offset_++;
+}
+
+float constrain(float min, float max, float a)
+{
+    if (a < min) return min;
+    if (a > max) return max;
+    return a;
+}
+
+template<typename Dtype>
+void correct_boxes(Dtype* top_label, int label_offset, float dx, float dy, float sx, float sy, int flip)
+{
+    int i;
+    for(i = 0; i < 30; ++i){
+      int id = top_label[label_offset+(i*5)+0];
+      float x = top_label[label_offset+(i*5)+1];
+      float y = top_label[label_offset+(i*5)+2];
+      float w = top_label[label_offset+(i*5)+3];
+      float h = top_label[label_offset+(i*5)+4];
+      // LOG(INFO) << "id: " << id << " x: " << x << " y: " << y << " w: " << w << " h: " << h;
+      if(x == 0 && y == 0) {
+          x = 999999;
+          y = 999999;
+          w = 999999;
+          h = 999999;
+          continue;
+      }
+      float left   = (x-w/2) * sx - dx;
+      float right  = (x+w/2) * sx - dx;
+      float top    = (y-h/2) * sy - dy;
+      float bottom = (y+h/2) * sy - dy;
+
+      if(flip){
+        float swap = left;
+        left = 1. - right;
+        right = 1. - swap;
+      }
+
+      left =  constrain(0, 1, left);
+      right = constrain(0, 1, right);
+      top =   constrain(0, 1, top);
+      bottom =   constrain(0, 1, bottom);
+
+      x = (left+right)/2;
+      y = (top+bottom)/2;
+      w = (right - left);
+      h = (bottom - top);
+
+      w = constrain(0, 1, w);
+      h = constrain(0, 1, h);
+
+      top_label[label_offset+(i*5)+1] = x;
+      top_label[label_offset+(i*5)+2] = y;
+      top_label[label_offset+(i*5)+3] = w;
+      top_label[label_offset+(i*5)+4] = h;
+      // LOG(INFO) << "Modified id: " << id << " x: " << x << " y: " << y << " w: " << w << " h: " << h;
+    }
+}
+
+template<typename Dtype>
+void fill_truth_detection(Dtype* top_label, int label_offset, int flip, float dx, float dy, float sx, float sy)
+{
+    Dtype* top_label_temp;
+    top_label_temp = (Dtype*)calloc(150, sizeof(Dtype));
+    memcpy(top_label_temp, top_label, 150*sizeof(Dtype));
+
+    correct_boxes(top_label_temp, label_offset, dx, dy, sx, sy, flip);
+    // if(count > num_boxes) count = num_boxes;
+
+    float x,y,w,h;
+    int id;
+
+    // std::cout << "\n\n";
+    int current_label = 0;
+    for (int i = 0; i < 30; ++i) {
+      id = top_label_temp[label_offset+(i*5)+0];
+      x =  top_label_temp[label_offset+(i*5)+1];
+      y =  top_label_temp[label_offset+(i*5)+2];
+      w =  top_label_temp[label_offset+(i*5)+3];
+      h =  top_label_temp[label_offset+(i*5)+4];
+
+      // Check here to see if these values are correct (x,y,w,h,id)
+
+      if ((w < .001 || h < .001)) continue;
+
+      // LOG(INFO) << "Width check id: " << id << " x: " << x << " y: " << y << " w: " << w << " h: " << h;
+
+      // fprintf(fp,"%d %f %f %f %f\n", id, x, y, w, h);
+
+      top_label[label_offset+(current_label*5)+0] = id;
+      top_label[label_offset+(current_label*5)+1] = x;
+      top_label[label_offset+(current_label*5)+2] = y;
+      top_label[label_offset+(current_label*5)+3] = w;
+      top_label[label_offset+(current_label*5)+4] = h;
+      current_label++;
+    }
+    while (current_label < 30) {
+      top_label[label_offset+(current_label*5)+0] = -1;
+      top_label[label_offset+(current_label*5)+1] = 0;
+      top_label[label_offset+(current_label*5)+2] = 0;
+      top_label[label_offset+(current_label*5)+3] = 0;
+      top_label[label_offset+(current_label*5)+4] = 0;
+      current_label++;
+    }
 }
 
 // This function is called on prefetch thread
@@ -118,11 +222,21 @@ void BoxDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 
     // Apply data transformations (mirror, scale, crop...)
     timer.Start();
+    float dx = 0;
+    float dy = 0;
+    float nw = 0;
+    float nh = 0;
+    int flip = 0;
     int offset = batch->data_.offset(item_id);
     Dtype* top_data = batch->data_.mutable_cpu_data();
     this->transformed_data_.set_cpu_data(top_data + offset);
     vector<float> box_labels;
-    this->data_transformer_->Transform(datum, &(this->transformed_data_));
+    // LOG(INFO) << "Dx: " << dx << " Dy: " << dy << " nw: " << nw << " nh: " << " flip: " << flip;
+    // Augment the data here and keep track of augmentation to map labels
+    this->data_transformer_->Transform(datum, &(this->transformed_data_), dx, dy, nw, nh, flip);
+    // this->data_transformer_->Transform(datum, &(this->transformed_data_));
+
+    // LOG(INFO) << "Modified - Dx: " << dx << " Dy: " << dy << " nw: " << nw << " nh: " << nh << " flip: " << flip;
 
     //******************************DEBUG LOAD IMAGE LMDB************************************
     // char file_name[200];
@@ -163,6 +277,18 @@ void BoxDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
         top_label[label_offset+i] = datum.float_data((index*150)+i);
       }
 
+      int w = 288;
+      int h = 288;
+
+      // LOG(INFO) << "Modified id: " << top_label[label_offset+0] << " x: " << 
+      //   top_label[label_offset+1] << " y: " << top_label[label_offset+2] <<
+      //    " w: " << top_label[label_offset+3] << " h: " << top_label[label_offset+4];
+      // Darknet function that maps the modified labels for caffe
+      fill_truth_detection(top_label, label_offset, flip, -dx/w, -dy/h, nw/w, nh/h);
+      // LOG(INFO) << "Modified id: " << top_label[label_offset+0] << " x: " << 
+      //   top_label[label_offset+1] << " y: " << top_label[label_offset+2] <<
+      //    " w: " << top_label[label_offset+3] << " h: " << top_label[label_offset+4] << "\n";
+
       //*****************************DEBUG LOAD LABELS LMDB********************************
       // sprintf(file_name, "VerifyTrain/modified_labels_%d_%d_%d_%d.csv", 
       //         iter_, this->transformed_data_.shape(1),
@@ -170,12 +296,12 @@ void BoxDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
       // fp = fopen(file_name, "w");
       // if(!fp) LOG(ERROR) << "Could not open or find file " << file_name;
       // for (int i = 0; i < 30; i++){
-      //     int spatialSize = 5;
-      //     int j = i*spatialSize;
-      //     for (; j < ((i+1)*spatialSize)-1; j++){
-      //         fprintf(fp,"%f,",datum.float_data(j));
-      //     }
-      //     fprintf(fp,"%f\n",datum.float_data(j));
+      //   int spatialSize = 5;
+      //   if (top_label[label_offset+(spatialSize*i)+0] == -1)
+      //     continue;
+      //   fprintf(fp, "%d %f %f %f %f\n", (int)top_label[label_offset+(spatialSize*i)+0],
+      //     top_label[label_offset+(spatialSize*i)+1], top_label[label_offset+(spatialSize*i)+2],
+      //     top_label[label_offset+(spatialSize*i)+3], top_label[label_offset+(spatialSize*i)+4]);
       // }
       // fflush(fp);
       // // LOG(INFO) << "\tFLOAT DATA Size: " << (datum.float_data_size()/150)-1;
