@@ -626,6 +626,13 @@ void random_distort_image(image im, float hue, float saturation, float exposure)
     distort_image(im, dhue, dsat, dexp);
 }
 
+void free_image(image m)
+{
+    if(m.data){
+        free(m.data);
+    }
+}
+
 template<typename Dtype>
 void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
                                        Blob<Dtype>* transformed_blob,
@@ -720,6 +727,7 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
   fill_image(sized, 0.5);
 
   place_image(orig, nw, nh, dx, dy, sized);
+  free_image(orig);
 
   random_distort_image(sized, hue, saturation, exposure);
 
@@ -730,6 +738,8 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
   for (int i = 0; i < width*height*3; ++i) {
     transformed_data[i] = sized.data[i];
   }
+
+  free_image(sized);
 
   // char file_name[200];
   // sprintf(file_name, "orig_raw.csv");
