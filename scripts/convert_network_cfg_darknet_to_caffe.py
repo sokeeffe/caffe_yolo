@@ -4,9 +4,9 @@ import numpy as np
 
 #caffe.set_device(0)  # if we have multiple GPUs, pick the first one
 caffe.set_mode_cpu()
-model_filename = 'xtiny-yolo-spl.prototxt'
-yoloweight_filename = 'xtiny-yolo-spl_v2_final.weights'
-caffemodel_filename = 'xtiny-yolo-spl.caffemodel'
+model_filename = 'models/micro_yolo_spl/micro-yolo-spl.prototxt'
+yoloweight_filename = 'models/micro_yolo_spl/micro-yolo-spl_final.weights'
+caffemodel_filename = 'models/micro_yolo_spl/micro-yolo-spl.caffemodel'
 # model_filename = 'yolo.prototxt'
 # yoloweight_filename = 'yolo.weights'
 # caffemodel_filename = 'yolo.caffemodel'
