@@ -140,6 +140,9 @@ void DataTransformer<Dtype>::Transform(const Datum& datum,
                                        Blob<Dtype>* transformed_blob) {
   // If datum is encoded, decode and transform the cv::image.
   // LOG(INFO) << "EXPECTED LOADING HERE";
+
+  LOG(INFO) << "Transform Datum called";
+
   if (datum.encoded()) {
 #ifdef USE_OPENCV
     CHECK(!(param_.force_color() && param_.force_gray()))
@@ -198,6 +201,9 @@ void DataTransformer<Dtype>::Transform(const Datum& datum,
                                        float &nw, float &nh, int &flip) {
   // If datum is encoded, decode and transform the cv::image.
   // LOG(INFO) << "EXPECTED LOADING HERE";
+
+  LOG(INFO) << "Transform Datum called";
+
   if (datum.encoded()) {
 #ifdef USE_OPENCV
     CHECK(!(param_.force_color() && param_.force_gray()))
@@ -209,6 +215,11 @@ void DataTransformer<Dtype>::Transform(const Datum& datum,
     } else {
       cv_img = DecodeDatumToCVMatNative(datum);
     }
+
+    // Check size of CV mat
+
+    LOG(INFO) << "cv_img " << cv_img.channels() << " " << cv_img.rows << " " << cv_img.cols;
+
     // Transform the cv::image into blob.
     // LOG(INFO) << "\tType: " << cv_img.type() << "," << cv_img.depth();
     return Transform(cv_img, transformed_blob, dx, dy, nw, nh, flip);
@@ -257,6 +268,8 @@ void DataTransformer<Dtype>::Transform(const vector<Datum> & datum_vector,
   const int channels = transformed_blob->channels();
   const int height = transformed_blob->height();
   const int width = transformed_blob->width();
+
+  LOG(INFO) << "Transform Datum Vector called";
 
   CHECK_GT(datum_num, 0) << "There is no datum to add";
   CHECK_LE(datum_num, num) <<

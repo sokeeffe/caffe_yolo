@@ -178,6 +178,9 @@ void fill_truth_detection(Dtype* top_label, int label_offset, int flip, float dx
       top_label[label_offset+(current_label*5)+4] = h;
       current_label++;
     }
+
+    free(top_label_temp);
+
     while (current_label < 30) {
       top_label[label_offset+(current_label*5)+0] = -1;
       top_label[label_offset+(current_label*5)+1] = 0;
@@ -284,7 +287,7 @@ void BoxDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
       //   top_label[label_offset+1] << " y: " << top_label[label_offset+2] <<
       //    " w: " << top_label[label_offset+3] << " h: " << top_label[label_offset+4];
       // Darknet function that maps the modified labels for caffe
-      fill_truth_detection(top_label, label_offset, flip, -dx/w, -dy/h, nw/w, nh/h);
+      // fill_truth_detection(top_label, label_offset, flip, -dx/w, -dy/h, nw/w, nh/h);
       // LOG(INFO) << "Modified id: " << top_label[label_offset+0] << " x: " << 
       //   top_label[label_offset+1] << " y: " << top_label[label_offset+2] <<
       //    " w: " << top_label[label_offset+3] << " h: " << top_label[label_offset+4] << "\n";
