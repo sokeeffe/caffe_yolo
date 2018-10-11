@@ -239,6 +239,8 @@ void BoxDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
     this->data_transformer_->Transform(datum, &(this->transformed_data_), dx, dy, nw, nh, flip);
     // this->data_transformer_->Transform(datum, &(this->transformed_data_));
 
+    WriteBlobToBinaryFile(this->transformed_data_);
+
     // LOG(INFO) << "Modified - Dx: " << dx << " Dy: " << dy << " nw: " << nw << " nh: " << nh << " flip: " << flip;
 
     //******************************DEBUG LOAD IMAGE LMDB************************************

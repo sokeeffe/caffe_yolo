@@ -10,6 +10,7 @@
 #include "caffe/layers/base_data_layer.hpp"
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/util/db.hpp"
+#include "caffe/util/blob_writer.hpp"
 
 namespace caffe {
 
