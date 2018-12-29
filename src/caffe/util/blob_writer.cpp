@@ -9,9 +9,9 @@
 
 namespace caffe {
 
-template <typename Dtype>
-void WriteBlobToBinaryFile(const Blob<Dtype>& blob){
-  return 0;
-}
+// template <typename Dtype>
+// void WriteBlobToBinaryFile(const Blob<Dtype>& blob){
+//   return 0;
+// }
 
 }   // namespace caffe

@@ -202,7 +202,7 @@ void DataTransformer<Dtype>::Transform(const Datum& datum,
   // If datum is encoded, decode and transform the cv::image.
   // LOG(INFO) << "EXPECTED LOADING HERE";
 
-  LOG(INFO) << "Transform Datum called";
+  // LOG(INFO) << "Transform Datum called";
 
   if (datum.encoded()) {
 #ifdef USE_OPENCV
@@ -218,7 +218,7 @@ void DataTransformer<Dtype>::Transform(const Datum& datum,
 
     // Check size of CV mat
 
-    LOG(INFO) << "cv_img " << cv_img.channels() << " " << cv_img.rows << " " << cv_img.cols;
+    // LOG(INFO) << "cv_img " << cv_img.channels() << " " << cv_img.rows << " " << cv_img.cols;
 
     // Transform the cv::image into blob.
     // LOG(INFO) << "\tType: " << cv_img.type() << "," << cv_img.depth();
@@ -269,7 +269,7 @@ void DataTransformer<Dtype>::Transform(const vector<Datum> & datum_vector,
   const int height = transformed_blob->height();
   const int width = transformed_blob->width();
 
-  LOG(INFO) << "Transform Datum Vector called";
+  // LOG(INFO) << "Transform Datum Vector called";
 
   CHECK_GT(datum_num, 0) << "There is no datum to add";
   CHECK_LE(datum_num, num) <<
@@ -472,7 +472,7 @@ float get_pixel_extend(image m, int x, int y, int c)
     /*
     if(x < 0) x = 0;
     if(x >= m.w) x = m.w-1;
-    if(y < 0) y = 0;
+    if(y < 0) y = 0;csv
     if(y >= m.h) y = m.h-1;
     */
     if(c < 0 || c >= m.c) return 0;
@@ -755,7 +755,7 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
   free_image(sized);
 
   // char file_name[200];
-  // sprintf(file_name, "orig_raw.csv");
+  // sprintf(file_name, "models/Region_Detector/Dec2018/orig_raw.csv");
   // FILE *fp = fopen(file_name, "w");
   // if(!fp) std::cout << "Could not open or find file " << file_name;;
   // for (int c = 0; c < orig.c; ++c){
@@ -773,7 +773,7 @@ void DataTransformer<Dtype>::Transform(const cv::Mat& cv_img,
   // }
   // fflush(fp);
 
-  // sprintf(file_name, "sized_raw.csv");
+  // sprintf(file_name, "models/Region_Detector/Dec2018/sized_raw.csv");
   // fp = fopen(file_name, "w");
   // if(!fp) std::cout << "Could not open or find file " << file_name;;
   // for (int c = 0; c < sized.c; ++c){

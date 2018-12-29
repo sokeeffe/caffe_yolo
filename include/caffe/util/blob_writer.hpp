@@ -14,11 +14,11 @@
 #include "caffe/util/mkl_alternate.hpp"
 
 
-namespace caffe {
+// namespace caffe {
 
-template <typename Dtype>
-void WriteBlobToBinaryFile(const Blob<Dtype>& blob);
+// template <typename Dtype>
+// void WriteBlobToBinaryFile(const Blob<Dtype>& blob);
 
-}   // namespace caffe
+// }   // namespace caffe
 
 #endif  // CAFFE_UTIL_BLOB_WRITER_H_
