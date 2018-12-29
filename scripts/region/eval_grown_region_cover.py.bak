@@ -1,0 +1,327 @@
+'''
+This script analyses the SPLObjDetect dataset and predicts the amount of
+image covered with a possible grid based region proposal
+It considers the image coverage for different feature map spatial dimensions
+ '''
+import sys
+import os
+import Image
+import math
+import glob
+import random
+import numpy as np
+import pandas as pd
+import numpy as np
+import cv2
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+
+class Box:
+  def __init__(self, xmin, ymin, width, height, occ=0, neigh=0, blob=0):
+    self.xmin = xmin
+    self.ymin = ymin
+    self.width = width
+    self.height = height
+    self.occ = occ
+    self.neigh = neigh
+    self.blob = blob
+
+class Blob:
+  def __init__(self, xmin, ymin, xmax, ymax):
+    self.xmin = xmin
+    self.ymin = ymin
+    self.xmax = xmax
+    self.ymax = ymax
+
+def overlap(x1, w1, x2, w2): #x1 ,x2 are two box xmin
+    left = max(x1, x2)
+    right = min(x1 + w1, x2 + w2)
+    return right - left
+
+def box_intersect(box, truth):
+    w = overlap(box.xmin, box.width, truth.xmin, truth.width)
+    h = overlap(box.ymin, box.height, truth.ymin, truth.height)
+    if w < 0 or h < 0:
+      return 0
+    else:
+      return 1
+
+if len(sys.argv) < 2:
+  print "Usage python eval_region_cover.py dataset_list.txt"
+  exit()
+
+image_dim = 288
+pool_factor = 32
+if image_dim%pool_factor != 0:
+  print "pool_factor must be a factor of image_dim"
+  exit()
+feature_size = image_dim/pool_factor
+
+boxes=[Box] * (feature_size*feature_size)
+
+for i in range(feature_size):
+  for j in range(feature_size):
+    ymin = i*pool_factor
+    xmin = j*pool_factor
+    index = i*feature_size + j
+    boxes[index] = Box(xmin, ymin, pool_factor, pool_factor)
+
+# ret = np.empty((288, 288, 3), dtype=np.float32)
+# ret.fill(0.5)
+
+# fig, ax = plt.subplots(1)
+# ax.imshow(ret)
+# for box in boxes:
+#   rect = patches.Rectangle((box.xmin, box.ymin),box.width,box.height,linewidth=1,edgecolor='r',facecolor='none')
+#   ax.add_patch(rect)
+
+# plt.show()
+
+occ_areas=[]
+
+image_file = sys.argv[1]
+f = open(image_file,'r')
+image_files = f.readlines()
+f.close()
+
+columns = ['image_name', 'num_objects','area_covered','grown_area_covered']
+imageDataDf = pd.DataFrame(index=np.arange(len(image_files)),columns=columns)
+
+for idx, line in enumerate(image_files):
+  # image_file = line.split('\n')[0]
+  image_file = "/home/simon/DeepLearning/datasets/SPLObjDetectDataset/train/images/eliza_ball_line_30085.png"
+  basename = os.path.basename(image_file).split('.')[0]
+  label_file = image_file.replace("images","labels")
+  label_file = label_file.replace("png","txt")
+
+  imageDataDf.loc[idx,'image_name'] = basename
+
+  if idx%200 == 0:
+    im = np.array(Image.open(image_file).resize((288,288), Image.ANTIALIAS))
+    fig, ax = plt.subplots(1)
+    ax.imshow(im)
+
+  blobs = []
+
+  gt_boxes = []
+  f = open(label_file,'r')
+  lines = f.readlines()
+  f.close()
+  for line in lines:
+    box_dims = line.rstrip('\n').split(' ')
+    xmin = int((float(box_dims[1])-float(box_dims[3])/2.0)*image_dim)
+    ymin = int((float(box_dims[2])-float(box_dims[4])/2.0)*image_dim)
+    width = int(float(box_dims[3])*image_dim)
+    height = int(float(box_dims[4])*image_dim)
+    gt_boxes.append(Box(xmin,ymin,width,height))
+
+  imageDataDf.loc[idx,'num_objects'] = len(lines)
+
+  box_area = pool_factor*pool_factor
+  occ_area = 0
+  neigh_area = 0
+  total_area = image_dim*image_dim
+
+  for index, box in enumerate(boxes):
+    box_added = False
+    for gt_box in gt_boxes:
+      if box_intersect(box, gt_box) > 0:
+        if not box_added:
+          occ_area = occ_area + box_area
+          # print index
+          box.occ = 1
+          box_added=True
+        if idx%200 == 0:
+          rect = patches.Rectangle((box.xmin, box.ymin),box.width,box.height,linewidth=1,color='r',alpha=0.5)
+          ax.add_patch(rect)
+      if idx%200 == 0:
+        rect = patches.Rectangle((box.xmin, box.ymin),box.width,box.height,linewidth=1,edgecolor='r',facecolor='none')
+        ax.add_patch(rect)
+
+  prev_cell_occ = False
+  for index, box in enumerate(boxes):
+    row = index/feature_size
+    col = index%feature_size
+    if col == feature_size-1:
+      prev_cell_occ = False
+      continue
+    if box.occ:
+      prev_cell_occ = True
+      continue
+    if box.neigh:
+      continue
+    if prev_cell_occ:
+      # Check up
+      max_row = -1
+      max_col = -1
+      end_check = False
+      print "\n\n"
+      for r in range(row-1, -1, -1):
+        if boxes[r*feature_size + col-1].occ:
+          print str(row) + " " + str(col)
+          for c in range(col, feature_size):
+            if boxes[r*feature_size + c].occ:
+              max_row = r
+              max_col = max(max_col,c)
+              print "\t\t" + str(max_row) + " " + str(max_col)
+            else:
+              break
+        elif max_col > col-1 and not end_check:
+          print "\t" + str(r) + " " + str(max_col)
+          for c in range(col-1, max_col+1):
+            if boxes[r*feature_size + c].occ:
+              print "COL: " + str(c)
+              for c2 in range(c, feature_size):
+                if boxes[r*feature_size + c2].occ:
+                  max_row = r
+                  max_col = max(max_col,c2)
+                  print "\t\t" + str(max_row) + " " + str(max_col)
+                else:
+                  break
+          if max_row != r:
+            end_check=True
+        if end_check:
+          print "\t\t\t" + str(max_row) + " " + str(max_col)
+          for r2 in range(max_row, row+1):
+            for c2 in range(col, max_col+1):
+              if not boxes[r2*feature_size + c2].occ:
+                boxes[r2*feature_size + c2].neigh = 1
+                neigh_area = neigh_area + box_area
+                if idx%200 == 0:
+                  rect = patches.Rectangle((boxes[r2*feature_size + c2].xmin, boxes[r2*feature_size + c2].ymin),boxes[r2*feature_size + c2].width,boxes[r2*feature_size + c2].height,linewidth=1,color='b',alpha=0.5)
+                  ax.add_patch(rect)
+          break
+      # Check down
+    #   max_row = -1
+    #   max_col = -1
+    #   end_check = False
+    #   for r in range(row+1, feature_size):
+    #     if boxes[r*feature_size + col-1].occ:
+    #       for c in range(col, feature_size):
+    #         if boxes[r*feature_size + c].occ:
+    #           max_row = r
+    #           max_col = max(max_col,c)
+    #         else:
+    #           break
+    #     elif max_col > col-1 and not end_check:
+    #       # print "\t" + str(r) + " " + str(c)
+    #       for c in range(col-1, max_col+1):
+    #         if boxes[r*feature_size + c].occ:
+    #           for c2 in range(c, feature_size):
+    #             if boxes[r*feature_size + c2].occ:
+    #               max_row = r
+    #               max_col = min(max_col,c2)
+    #               # print "\t\t" + str(max_row) + " " + str(max_col)
+    #             else:
+    #               break
+    #       if max_row != r:
+    #         end_check=True
+    #     else:
+    #       if max_row >= 0:
+    #         for r2 in range(row, max_row+1):
+    #           for c2 in range(col, max_col+1):
+    #             if not boxes[r2*feature_size + c2].occ:
+    #               boxes[r2*feature_size + c2].neigh = 1
+    #               neigh_area = neigh_area + box_area
+    #               if idx%200 == 0:
+    #                 rect = patches.Rectangle((boxes[r2*feature_size + c2].xmin, boxes[r2*feature_size + c2].ymin),boxes[r2*feature_size + c2].width,boxes[r2*feature_size + c2].height,linewidth=1,color='b',alpha=0.5)
+    #                 ax.add_patch(rect)
+    #       break
+    # # Check Next Cell Occupied
+    # if boxes[row*feature_size + col+1].occ:
+    #   # Check up
+    #   # print str(row) + " " + str(col)
+    #   max_row = -1
+    #   max_col = 10
+    #   end_check = False
+    #   for r in range(row-1, -1, -1):
+    #     if boxes[r*feature_size + col+1].occ:
+    #       for c in range(col, -1, -1):
+    #         if boxes[r*feature_size + c].occ:
+    #           max_row = r
+    #           max_col = min(max_col,c)
+    #         else:
+    #           break
+    #     elif max_col < col+1 and not end_check:
+    #       # print "\t" + str(r) + " " + str(c)
+    #       for c in range(max_col, col+1):
+    #         if boxes[r*feature_size + c].occ:
+    #           for c2 in range(c, -1, -1):
+    #             if boxes[r*feature_size + c2].occ:
+    #               max_row = r
+    #               max_col = min(max_col,c2)
+    #               # print "\t\t" + str(max_row) + " " + str(max_col)
+    #             else:
+    #               break
+    #       if max_row != r:
+    #         end_check=True
+    #     else:
+    #       if max_row >= 0:
+    #         for r2 in range(max_row, row+1):
+    #           for c2 in range(max_col, col+1):
+    #             if not boxes[r2*feature_size + c2].occ:
+    #               boxes[r2*feature_size + c2].neigh = 1
+    #               neigh_area = neigh_area + box_area
+    #               if idx%200 == 0:
+    #                 rect = patches.Rectangle((boxes[r2*feature_size + c2].xmin, boxes[r2*feature_size + c2].ymin),boxes[r2*feature_size + c2].width,boxes[r2*feature_size + c2].height,linewidth=1,color='b',alpha=0.5)
+    #                 ax.add_patch(rect)
+    #       break
+    #   # Check down
+    #   max_row = -1
+    #   max_col = 10
+    #   end_check = False
+    #   for r in range(row+1, feature_size):
+    #     if boxes[r*feature_size + col+1].occ:
+    #       # print str(row) + " " + str(col)
+    #       for c in range(col, -1, -1):
+    #         if boxes[r*feature_size + c].occ:
+    #           # print "\t" + str(r) + " " + str(c)
+    #           max_row = r
+    #           max_col = min(max_col,c)
+    #           # print "\t\t" + str(max_row) + " " + str(max_col)
+    #         else:
+    #           break
+    #     elif max_col < col+1 and not end_check:
+    #       # print "\t" + str(r) + " " + str(c)
+    #       for c in range(max_col, col+1):
+    #         if boxes[r*feature_size + c].occ:
+    #           for c2 in range(c, -1, -1):
+    #             if boxes[r*feature_size + c2].occ:
+    #               max_row = r
+    #               max_col = min(max_col,c2)
+    #               # print "\t\t" + str(max_row) + " " + str(max_col)
+    #             else:
+    #               break
+    #       if max_row != r:
+    #         end_check=True
+    #     else:
+    #       if max_row < 10:
+    #         for r2 in range(row, max_row+1):
+    #           for c2 in range(max_col, col+1):
+    #             if not boxes[r2*feature_size + c2].occ:
+    #               boxes[r2*feature_size + c2].neigh = 1
+    #               neigh_area = neigh_area + box_area
+    #               if idx%200 == 0:
+    #                 rect = patches.Rectangle((boxes[r2*feature_size + c2].xmin, boxes[r2*feature_size + c2].ymin),boxes[r2*feature_size + c2].width,boxes[r2*feature_size + c2].height,linewidth=1,color='b',alpha=0.5)
+    #                 ax.add_patch(rect)
+    #         break
+    prev_cell_occ = False
+
+  print "Neigh Area: " + str(neigh_area/float(total_area))
+  # print "Box Area: " + str(box_area) + " Occ Area: " + str(occ_area) + " Total Area: " + str(total_area)
+  imageDataDf.loc[idx,'area_covered'] = occ_area/float(total_area)
+  imageDataDf.loc[idx,'grown_area_covered'] = neigh_area/float(total_area)
+  if idx%200 == 0:
+    fig.savefig("VerifyRegion/grown_"+str(feature_size)+"/"+basename+".jpg")
+    plt.clf()
+  break
+
+imageDataDf.to_csv('/home/simon/DeepLearning/caffe/VerifyRegion/grown_region_'+str(feature_size)+'.csv')
+
+print "areaMean: " + str(imageDataDf['area_covered'].mean())
+print "min area: " + str(imageDataDf['area_covered'].min())
+print "max area: " + str(imageDataDf['area_covered'].max())
+print "std dev area: " + str(imageDataDf['area_covered'].std())
+
+print "NeighAreaMean: " + str(imageDataDf['grown_area_covered'].mean())
+print "TotalAreaCovered: " + str(imageDataDf['area_covered'].mean() + imageDataDf['grown_area_covered'].mean())

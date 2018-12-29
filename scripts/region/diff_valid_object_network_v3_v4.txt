@@ -1,0 +1,24 @@
+48c48
+< out_file = '/home/simon/DeepLearning/caffe/models/Region_Detector/network_perf.csv'
+---
+> out_file = '/home/simon/DeepLearning/caffe/models/Region_Darknet/network_perf_v4.csv'
+75,76c75,76
+<     else:
+<       return 1
+---
+>     area = w*h
+>     return area
+192,193c192,197
+<           if box_intersect(box, gt_box) > 0:
+<             imageDataDf.loc[df_index,'gt'] = 1
+---
+>           box_inter = box_intersect(box, gt_box)
+>           if box_inter > 0:
+>             # print "Box width: " + str(box.width) + " height: " + str(box.height)
+>             # print "Box width: " + str(gt_box.width) + " height: " + str(gt_box.height)
+>             # print "Box Intersect: " + str(box_inter)
+>             imageDataDf.loc[df_index,'gt'] = float(box_inter)/(box.width*box.height)
+206c210
+<   #   break
+---
+>   # break

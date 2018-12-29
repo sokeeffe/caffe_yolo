@@ -1,0 +1,8 @@
+200a201
+>   im = cv2.resize(im,(288,288), interpolation=cv2.INTER_NEAREST)
+202,203c203,204
+<   im_letterbox = letterbox_image(im,288,288)
+<   det(idx, im_letterbox, os.path.basename(image_file).split('.')[0], label_file)
+---
+>   # im_letterbox = letterbox_image(im,288,288)
+>   det(idx, im, os.path.basename(image_file).split('.')[0], label_file)
