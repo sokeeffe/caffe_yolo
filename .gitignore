@@ -97,3 +97,9 @@ LOCK
 LOG*
 CURRENT
 MANIFEST-*
+
+*.bak
+results/*
+results_bak/*
+Verify*
+debuging/*
