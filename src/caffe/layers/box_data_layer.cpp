@@ -145,8 +145,8 @@ template<typename Dtype>
 void fill_truth_detection(Dtype* top_label, int label_offset, int flip, float dx, float dy, float sx, float sy)
 {
     Dtype* top_label_temp;
-    top_label_temp = (Dtype*)calloc(150, sizeof(Dtype));
-    memcpy(top_label_temp, top_label, 150*sizeof(Dtype));
+    top_label_temp = (Dtype*)calloc(150*2, sizeof(Dtype));
+    memcpy(top_label_temp, top_label, 150*2*sizeof(Dtype));
 
     correct_boxes(top_label_temp, label_offset, dx, dy, sx, sy, flip);
     // if(count > num_boxes) count = num_boxes;
@@ -245,8 +245,8 @@ void BoxDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 
     //******************************DEBUG LOAD IMAGE LMDB************************************
     char file_name[200];
-    sprintf(file_name, "models/Region_Detector/Jan2019/lmdb_input_%d_%d_%d_%d.csv", 
-              iter_, this->transformed_data_.shape(1),
+    sprintf(file_name, "models/Region_Detector/Jan2019/lmdb_input_%d_%d_%d_%d_%d.csv",
+              iter_, item_id, this->transformed_data_.shape(1),
               this->transformed_data_.shape(2),this->transformed_data_.shape(3));
     FILE *fp = fopen(file_name, "w");
     if(!fp) LOG(ERROR) << "Could not open or find file " << file_name;;
@@ -295,8 +295,8 @@ void BoxDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
       //    " w: " << top_label[label_offset+3] << " h: " << top_label[label_offset+4] << "\n";
 
       //*****************************DEBUG LOAD LABELS LMDB********************************
-      sprintf(file_name, "models/Region_Detector/Jan2019/modified_labels_%d_%d_%d_%d.csv", 
-              iter_, this->transformed_data_.shape(1),
+      sprintf(file_name, "models/Region_Detector/Jan2019/modified_labels_%d_%d_%d_%d_%d.csv",
+              iter_, item_id, this->transformed_data_.shape(1),
               this->transformed_data_.shape(2),this->transformed_data_.shape(3));
       fp = fopen(file_name, "w");
       if(!fp) LOG(ERROR) << "Could not open or find file " << file_name;
