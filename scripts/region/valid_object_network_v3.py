@@ -33,7 +33,8 @@ if len(sys.argv) != 4:
   print "Usage: python valid_object_network.py valid_images net.prototxt net.caffemodel"
   exit()
 
-caffe.set_mode_gpu()  
+# caffe.set_mode_gpu()  
+caffe.set_mode_cpu()
 
 valid_images = sys.argv[1]
 model_def = sys.argv[2]
@@ -45,7 +46,7 @@ net = caffe.Net(model_def, model_weights, caffe.TEST)
 
 net.blobs['data'].reshape(1,3,288,288)
 
-out_file = '/home/simon/DeepLearning/caffe/models/Region_Detector/network_perf_augment_07Sep2018.csv'
+out_file = '/home/simon/DeepLearning/caffe/models_bak/network_perf_07Mar2019.csv'
 
 f = open(valid_images,'r')
 images = f.readlines()

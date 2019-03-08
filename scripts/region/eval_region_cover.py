@@ -41,7 +41,7 @@ if len(sys.argv) < 2:
   exit()
 
 image_dim = 288
-pool_factor = 4
+pool_factor = 16
 if image_dim%pool_factor != 0:
   print "pool_factor must be a factor of image_dim"
   exit()
@@ -125,10 +125,10 @@ for idx, line in enumerate(image_files):
   # print "Box Area: " + str(box_area) + " Occ Area: " + str(occ_area) + " Total Area: " + str(total_area)
   imageDataDf.loc[idx,'area_covered'] = occ_area/float(total_area)
   if idx%200 == 0:
-    fig.savefig("VerifyRegion/"+str(feature_size)+"/"+basename+".jpg")
+    fig.savefig("VerifyKITTI/"+str(feature_size)+"/"+basename+".jpg")
     plt.clf()
 
-imageDataDf.to_csv('/home/simon/DeepLearning/caffe/VerifyRegion/region_'+str(feature_size)+'.csv')
+imageDataDf.to_csv('/home/simon/DeepLearning/caffe/VerifyKITTI/region_'+str(feature_size)+'.csv')
 
 print "areaMean: " + str(imageDataDf['area_covered'].mean())
 print "min area: " + str(imageDataDf['area_covered'].min())
