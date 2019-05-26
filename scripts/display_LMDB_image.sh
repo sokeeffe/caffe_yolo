@@ -37,13 +37,13 @@ image_raw="$(sed 's/lmdb/image/g;s/csv/jpg/g' <<<$image)"
 
 cp sized_loaded.jpg $image_raw
 
-# Put labels on the jpg image
-$pythonDirectory/SaveYOLOData.py $image_raw $label
-
 image_labelled="$(sed 's/input/label/g' <<<$image_raw)"
+
+# Put labels on the jpg image
+$pythonDirectory/SaveYOLOData_v2.py $image_raw $label $image_labelled
 
 image_file=$(basename "$image_raw")
 
-mv $image_file $image_labelled
+#mv $image_file $image_labelled
 
 echo $codeDirectory
