@@ -245,7 +245,7 @@ void BoxDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
 
     //******************************DEBUG LOAD IMAGE LMDB************************************
     char file_name[200];
-    sprintf(file_name, "models_May19/region_proposal9/lmdb_input_%d_%d_%d_%d_%d.csv",
+    sprintf(file_name, "/docker_data/lmdb_input_%d_%d_%d_%d_%d.csv",
               iter_, item_id, this->transformed_data_.shape(1),
               this->transformed_data_.shape(2),this->transformed_data_.shape(3));
     FILE *fp = fopen(file_name, "w");
@@ -295,7 +295,7 @@ void BoxDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
       //    " w: " << top_label[label_offset+3] << " h: " << top_label[label_offset+4] << "\n";
 
       //*****************************DEBUG LOAD LABELS LMDB********************************
-      sprintf(file_name, "models_May19/region_proposal9/modified_labels_%d_%d_%d_%d_%d.csv",
+      sprintf(file_name, "/docker_data/modified_labels_%d_%d_%d_%d_%d.csv",
               iter_, item_id, this->transformed_data_.shape(1),
               this->transformed_data_.shape(2),this->transformed_data_.shape(3));
       fp = fopen(file_name, "w");
