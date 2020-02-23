@@ -61,8 +61,15 @@ Makefile.config
 # Data and models are either
 # 1. reference, and not casually committed
 # 2. custom, and live on their own unless they're deliberated contributed
+docker_data/*
+docker_models/*
 data/*
 models/*
+models_bak/*
+model_10Mar2019/*
+models_May19/*
+models_Jun19/*
+models_Aug19/*
 *.caffemodel
 *.caffemodel.h5
 *.solverstate
@@ -104,3 +111,8 @@ results/*
 results_bak/*
 Verify*
 debuging/*
+temp_dataset/*
+temp_output/*
+temp_visualize/*
+VerifyKITTI/*
+VerifyObject/*
