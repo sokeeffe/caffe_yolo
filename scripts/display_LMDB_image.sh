@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# display_LMDB-image.sh
+# display_LMDB_image.sh
 # Script takes a lmdb image input in the form of a csv file and matching
 # labels also stored in a csv file. It first processes the lmdb input 
 # image file to generate a jpg image with a cpp file. It calls a python 
@@ -19,18 +19,20 @@ pythonDirectory=/home/simon/Coding/Python
 
 image=$1
 label=$2
+image_dim=$3
 
 # Script requires two parameters
 #   lmdb image file
 #   labels file
-if [ -z $2 ] ; then
+#   image dimension
+if [ -z $3 ] ; then
   echo "*** ${scriptName} ERROR: called with args: $*"
-  echo "usage ${scriptName} net_lmdb.csv labels.txt"
+  echo "usage ${scriptName} net_lmdb.csv labels.txt image_dimension"
   exit 1
 fi
 
 # Converts the lmdb data into a jpg image
-$codeDirectory/darknet_caffe_lmdb_image_show $1 $2
+$codeDirectory/darknet_caffe_lmdb_image_show_var $1 $2 $3
 
 # Get the name for the jpg image
 image_raw="$(sed 's/lmdb/image/g;s/csv/jpg/g' <<<$image)"
@@ -40,7 +42,8 @@ cp sized_loaded.jpg $image_raw
 image_labelled="$(sed 's/input/label/g' <<<$image_raw)"
 
 # Put labels on the jpg image
-$pythonDirectory/SaveYOLOData_v2.py $image_raw $label $image_labelled
+# $pythonDirectory/SaveYOLOData_v2.py $image_raw $label $image_labelled
+$pythonDirectory/SaveYOLOData_v2.py $image_raw $label
 
 image_file=$(basename "$image_raw")
 

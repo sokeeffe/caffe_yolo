@@ -282,8 +282,8 @@ void BoxDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
         top_label[label_offset+i] = datum.float_data((index*150)+i);
       }
 
-      int w = 288;
-      int h = 288;
+      int w = this->transformed_data_.shape(2);
+      int h = this->transformed_data_.shape(3);
 
       // LOG(INFO) << "Modified id: " << top_label[label_offset+0] << " x: " << 
       //   top_label[label_offset+1] << " y: " << top_label[label_offset+2] <<
