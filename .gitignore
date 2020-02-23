@@ -68,7 +68,7 @@ models/*
 models_bak/*
 model_10Mar2019/*
 models_May19/*
-models_Jun19/*
+models_June19/*
 models_Aug19/*
 *.caffemodel
 *.caffemodel.h5
