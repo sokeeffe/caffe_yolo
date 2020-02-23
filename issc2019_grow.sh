@@ -1,0 +1,4 @@
+#!/bin/bash
+python scripts/region/eval_grown_region_cover_v2.py docker_models/sandbox/network_perf_11Mar2019.csv docker_models/sandbox/network_perf_grown_11Mar2019.csv
+
+python scripts/region/eval_grown_region_cover_v3.py docker_models/sandbox/network_perf_b32_11Mar2019.csv docker_models/sandbox/network_perf_grown_b32_11Mar2019.csv
