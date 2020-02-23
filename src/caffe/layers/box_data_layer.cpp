@@ -244,26 +244,26 @@ void BoxDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
     // LOG(INFO) << "Modified - Dx: " << dx << " Dy: " << dy << " nw: " << nw << " nh: " << nh << " flip: " << flip;
 
     //******************************DEBUG LOAD IMAGE LMDB************************************
-    char file_name[200];
-    sprintf(file_name, "/docker_data/lmdb_input_%d_%d_%d_%d_%d.csv",
-              iter_, item_id, this->transformed_data_.shape(1),
-              this->transformed_data_.shape(2),this->transformed_data_.shape(3));
-    FILE *fp = fopen(file_name, "w");
-    if(!fp) LOG(ERROR) << "Could not open or find file " << file_name;;
-    // Iterate backwards over channels to convert from BGR to RGB
-    for (int i = 0; i < this->transformed_data_.shape(1); i++){
-      for (int j = 0; j < this->transformed_data_.shape(2); j++) {
-        for (int k = 0; k < this->transformed_data_.shape(3); k++) {
-          // Values are stored in memory [rows,cols,channels] so convert to [channels,rows,cols]
-          // int index = j*cv_img_origin.channels()*cv_img_origin.cols + k*cv_img_origin.channels() + i;
-          if (k < this->transformed_data_.shape(3)-1)
-            fprintf(fp,"%f,",this->transformed_data_.data_at(0,i,j,k));
-          else
-            fprintf(fp,"%f\n",this->transformed_data_.data_at(0,i,j,k));
-        }
-      }
-    }
-    fflush(fp);
+    // char file_name[200];
+    // sprintf(file_name, "/docker_data/lmdb_input_%d_%d_%d_%d_%d.csv",
+    //           iter_, item_id, this->transformed_data_.shape(1),
+    //           this->transformed_data_.shape(2),this->transformed_data_.shape(3));
+    // FILE *fp = fopen(file_name, "w");
+    // if(!fp) LOG(ERROR) << "Could not open or find file " << file_name;;
+    // // Iterate backwards over channels to convert from BGR to RGB
+    // for (int i = 0; i < this->transformed_data_.shape(1); i++){
+    //   for (int j = 0; j < this->transformed_data_.shape(2); j++) {
+    //     for (int k = 0; k < this->transformed_data_.shape(3); k++) {
+    //       // Values are stored in memory [rows,cols,channels] so convert to [channels,rows,cols]
+    //       // int index = j*cv_img_origin.channels()*cv_img_origin.cols + k*cv_img_origin.channels() + i;
+    //       if (k < this->transformed_data_.shape(3)-1)
+    //         fprintf(fp,"%f,",this->transformed_data_.data_at(0,i,j,k));
+    //       else
+    //         fprintf(fp,"%f\n",this->transformed_data_.data_at(0,i,j,k));
+    //     }
+    //   }
+    // }
+    // fflush(fp);
     // // LOG(INFO) << "\tTransformed Data Shape: " << this->transformed_data_.shape(0) << ","
     // //         << this->transformed_data_.shape(1) << "," << this->transformed_data_.shape(2)
     // //         << "," << this->transformed_data_.shape(3);
@@ -295,20 +295,20 @@ void BoxDataLayer<Dtype>::load_batch(Batch<Dtype>* batch) {
       //    " w: " << top_label[label_offset+3] << " h: " << top_label[label_offset+4] << "\n";
 
       //*****************************DEBUG LOAD LABELS LMDB********************************
-      sprintf(file_name, "/docker_data/modified_labels_%d_%d_%d_%d_%d.csv",
-              iter_, item_id, this->transformed_data_.shape(1),
-              this->transformed_data_.shape(2),this->transformed_data_.shape(3));
-      fp = fopen(file_name, "w");
-      if(!fp) LOG(ERROR) << "Could not open or find file " << file_name;
-      for (int i = 0; i < 30; i++){
-        int spatialSize = 5;
-        if (top_label[label_offset+(spatialSize*i)+0] == -1)
-          continue;
-        fprintf(fp, "%d %f %f %f %f\n", (int)top_label[label_offset+(spatialSize*i)+0],
-          top_label[label_offset+(spatialSize*i)+1], top_label[label_offset+(spatialSize*i)+2],
-          top_label[label_offset+(spatialSize*i)+3], top_label[label_offset+(spatialSize*i)+4]);
-      }
-      fflush(fp);
+      // sprintf(file_name, "/docker_data/modified_labels_%d_%d_%d_%d_%d.csv",
+      //         iter_, item_id, this->transformed_data_.shape(1),
+      //         this->transformed_data_.shape(2),this->transformed_data_.shape(3));
+      // fp = fopen(file_name, "w");
+      // if(!fp) LOG(ERROR) << "Could not open or find file " << file_name;
+      // for (int i = 0; i < 30; i++){
+      //   int spatialSize = 5;
+      //   if (top_label[label_offset+(spatialSize*i)+0] == -1)
+      //     continue;
+      //   fprintf(fp, "%d %f %f %f %f\n", (int)top_label[label_offset+(spatialSize*i)+0],
+      //     top_label[label_offset+(spatialSize*i)+1], top_label[label_offset+(spatialSize*i)+2],
+      //     top_label[label_offset+(spatialSize*i)+3], top_label[label_offset+(spatialSize*i)+4]);
+      // }
+      // fflush(fp);
       // // LOG(INFO) << "\tFLOAT DATA Size: " << (datum.float_data_size()/150)-1;
       // // LOG(INFO) << "\tTOP_LABEL: " << batch->label_.count();
       // LOG(INFO) << "\t\tLABEL VALUE: " << datum.float_data(0) << "," 
